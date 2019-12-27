@@ -29,6 +29,7 @@ impl Lexer<'_> {
     }
 
     pub fn next_token(&mut self) -> Result<Token, &str> {
+        self.skip_whitespace();
         if let Some((pos, ch)) = self.read_char() {
             match ch {
                 '1'..='9' => {
@@ -47,11 +48,22 @@ impl Lexer<'_> {
             Ok(Token::EOF)
         }
     }
+
+    fn skip_whitespace(&mut self) {
+        while let Some(&(_pos, ch)) = self.peek_char() {
+            match ch {
+                '\t' | ' ' => {
+                    self.read_char();
+                }
+                _ => return,
+            }
+        }
+    }
 }
 
 #[test]
 fn test_next_token() {
-    let code = "123";
+    let code = "  123  ";
     let mut l = Lexer::new(code);
     assert_eq!(l.next_token(), Ok(Token::Int("123")));
     assert_eq!(l.next_token(), Ok(Token::EOF));
