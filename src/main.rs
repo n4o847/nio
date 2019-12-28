@@ -1,6 +1,6 @@
 mod lexer;
-use lexer::Lexer;
+mod repl;
 
 fn main() {
-    println!("Hello, world!");
+    repl::start().unwrap();
 }
