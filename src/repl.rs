@@ -7,11 +7,13 @@ pub fn start() -> io::Result<()> {
     for line in stdin.lock().lines() {
         let input = line?;
         let mut l = Lexer::new(&input[..]);
-        while let Ok(token) = l.next_token() {
+        loop {
+            let token = l.next_token();
             writeln!(stdout, "{:?}", token)?;
-            if token == Token::EOF {
-                break;
-            }
+            match token {
+                Token::EOF | Token::Unexpected(_) => break,
+                _ => (),
+            };
         }
         stdout.flush()?;
     }
