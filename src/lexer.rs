@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
-pub enum Token<'a> {
-    Int(&'a str),
+pub enum Token {
+    Int(String),
     Add,
     Mul,
     EOF,
@@ -37,12 +37,12 @@ impl Lexer<'_> {
                 '1'..='9' => {
                     while let Some(&(pos_end, ch)) = self.peek_char() {
                         if !('0'..='9').contains(&ch) {
-                            return Ok(Token::Int(&self.input[pos..pos_end]));
+                            return Ok(Token::Int((&self.input[pos..pos_end]).to_string()));
                         } else {
                             self.read_char();
                         }
                     }
-                    return Ok(Token::Int(&self.input[pos..]));
+                    return Ok(Token::Int((&self.input[pos..]).to_string()));
                 }
                 '+' => Ok(Token::Add),
                 '*' => Ok(Token::Mul),
@@ -69,10 +69,10 @@ impl Lexer<'_> {
 fn test_next_token() {
     let code = "12 + 34 * 56";
     let mut l = Lexer::new(code);
-    assert_eq!(l.next_token(), Ok(Token::Int("12")));
+    assert_eq!(l.next_token(), Ok(Token::Int("12".to_string())));
     assert_eq!(l.next_token(), Ok(Token::Add));
-    assert_eq!(l.next_token(), Ok(Token::Int("34")));
+    assert_eq!(l.next_token(), Ok(Token::Int("34".to_string())));
     assert_eq!(l.next_token(), Ok(Token::Mul));
-    assert_eq!(l.next_token(), Ok(Token::Int("56")));
+    assert_eq!(l.next_token(), Ok(Token::Int("56".to_string())));
     assert_eq!(l.next_token(), Ok(Token::EOF));
 }
