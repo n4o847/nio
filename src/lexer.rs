@@ -1,6 +1,8 @@
 #[derive(Debug, PartialEq)]
 pub enum Token<'a> {
     Int(&'a str),
+    Add,
+    Mul,
     EOF,
 }
 
@@ -42,6 +44,8 @@ impl Lexer<'_> {
                     }
                     return Ok(Token::Int(&self.input[pos..]));
                 }
+                '+' => Ok(Token::Add),
+                '*' => Ok(Token::Mul),
                 _ => Err("Unexpected token"),
             }
         } else {
@@ -63,8 +67,12 @@ impl Lexer<'_> {
 
 #[test]
 fn test_next_token() {
-    let code = "  123  ";
+    let code = "12 + 34 * 56";
     let mut l = Lexer::new(code);
-    assert_eq!(l.next_token(), Ok(Token::Int("123")));
+    assert_eq!(l.next_token(), Ok(Token::Int("12")));
+    assert_eq!(l.next_token(), Ok(Token::Add));
+    assert_eq!(l.next_token(), Ok(Token::Int("34")));
+    assert_eq!(l.next_token(), Ok(Token::Mul));
+    assert_eq!(l.next_token(), Ok(Token::Int("56")));
     assert_eq!(l.next_token(), Ok(Token::EOF));
 }
