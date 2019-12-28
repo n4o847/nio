@@ -1,4 +1,5 @@
 use crate::lexer::{Lexer, Token};
+use crate::parser::Parser;
 use std::io::{self, BufRead, Write};
 
 pub fn start() -> io::Result<()> {
@@ -15,6 +16,8 @@ pub fn start() -> io::Result<()> {
                 _ => (),
             };
         }
+        let mut p = Parser::new(&input[..]);
+        writeln!(stdout, "{:?}", p.parse_program())?;
         stdout.flush()?;
     }
     Ok(())
