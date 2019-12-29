@@ -1,6 +1,6 @@
 use crate::lexer::{Lexer, Token};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum AST {
     InfixExpression {
         left: Box<AST>,
@@ -12,7 +12,7 @@ pub enum AST {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Infix {
     Add,
     Mul,
@@ -117,4 +117,42 @@ impl Parser<'_> {
             _ => Err("Expected IntegerLiteral"),
         }
     }
+}
+
+#[test]
+fn test_integer_literal() {
+    assert_eq!(
+        Parser::new("123").parse_program(),
+        Ok(AST::IntegerLiteral {
+            token: Token::Int("123".to_string())
+        })
+    );
+}
+
+#[test]
+fn test_infix_expression() {
+    assert_eq!(
+        Parser::new("1 + 2 * 3 * 4").parse_program(),
+        Ok(AST::InfixExpression {
+            left: Box::new(AST::IntegerLiteral {
+                token: Token::Int("1".to_string())
+            }),
+            infix: Infix::Add,
+            right: Box::new(AST::InfixExpression {
+                left: Box::new(AST::InfixExpression {
+                    left: Box::new(AST::IntegerLiteral {
+                        token: Token::Int("2".to_string())
+                    }),
+                    infix: Infix::Mul,
+                    right: Box::new(AST::IntegerLiteral {
+                        token: Token::Int("3".to_string())
+                    })
+                }),
+                infix: Infix::Mul,
+                right: Box::new(AST::IntegerLiteral {
+                    token: Token::Int("4".to_string())
+                })
+            })
+        })
+    );
 }
