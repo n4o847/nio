@@ -8,7 +8,7 @@ pub enum AST {
         right: Box<AST>,
     },
     IntegerLiteral {
-        token: Token,
+        raw: String,
     },
 }
 
@@ -108,12 +108,7 @@ impl Parser<'_> {
 
     fn parse_integer_literal(&mut self) -> Result<AST, &'static str> {
         match self.curr_token {
-            Token::Int(_) => {
-                let literal = AST::IntegerLiteral {
-                    token: self.curr_token.clone(),
-                };
-                Ok(literal)
-            }
+            Token::Int(ref raw) => Ok(AST::IntegerLiteral { raw: raw.clone() }),
             _ => Err("Expected IntegerLiteral"),
         }
     }
@@ -124,7 +119,7 @@ fn test_integer_literal() {
     assert_eq!(
         Parser::new("123").parse_program(),
         Ok(AST::IntegerLiteral {
-            token: Token::Int("123".to_string())
+            raw: "123".to_string()
         })
     );
 }
@@ -135,22 +130,22 @@ fn test_infix_expression() {
         Parser::new("1 + 2 * 3 * 4").parse_program(),
         Ok(AST::InfixExpression {
             left: Box::new(AST::IntegerLiteral {
-                token: Token::Int("1".to_string())
+                raw: "1".to_string()
             }),
             infix: Infix::Add,
             right: Box::new(AST::InfixExpression {
                 left: Box::new(AST::InfixExpression {
                     left: Box::new(AST::IntegerLiteral {
-                        token: Token::Int("2".to_string())
+                        raw: "2".to_string()
                     }),
                     infix: Infix::Mul,
                     right: Box::new(AST::IntegerLiteral {
-                        token: Token::Int("3".to_string())
+                        raw: "3".to_string()
                     })
                 }),
                 infix: Infix::Mul,
                 right: Box::new(AST::IntegerLiteral {
-                    token: Token::Int("4".to_string())
+                    raw: "4".to_string()
                 })
             })
         })
