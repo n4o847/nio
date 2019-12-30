@@ -37,10 +37,11 @@ impl Lexer<'_> {
             match ch {
                 '1'..='9' => {
                     while let Some(&(pos_end, ch)) = self.peek_char() {
-                        if !('0'..='9').contains(&ch) {
-                            return Token::Int((&self.input[pos..pos_end]).to_string());
-                        } else {
-                            self.read_char();
+                        match ch {
+                            '0'..='9' => {
+                                self.read_char();
+                            }
+                            _ => return Token::Int((&self.input[pos..pos_end]).to_string()),
                         }
                     }
                     return Token::Int((&self.input[pos..]).to_string());
