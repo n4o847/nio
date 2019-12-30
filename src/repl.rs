@@ -24,7 +24,6 @@ pub fn start() -> io::Result<()> {
         let n = p.parse_program();
         writeln!(stdout, "Parser:")?;
         writeln!(stdout, "  {:?}", n)?;
-        stdout.flush()?;
         match n {
             Ok(n) => {
                 let e = eval(n);
@@ -33,6 +32,8 @@ pub fn start() -> io::Result<()> {
             }
             Err(_) => (),
         }
+        write!(stdout, "> ")?;
+        stdout.flush()?;
     }
     Ok(())
 }
