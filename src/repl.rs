@@ -1,4 +1,4 @@
-use crate::eval::eval;
+use crate::eval::Evaluator;
 use crate::lexer::{Lexer, Token};
 use crate::parser::Parser;
 use std::io::{self, BufRead, Write};
@@ -21,14 +21,15 @@ pub fn start() -> io::Result<()> {
             };
         }
         let mut p = Parser::new(&input[..]);
-        let n = p.parse_program();
+        let a = p.parse_program();
         writeln!(stdout, "Parser:")?;
-        writeln!(stdout, "  {:?}", n)?;
-        match n {
-            Ok(n) => {
-                let e = eval(n);
+        writeln!(stdout, "  {:?}", a)?;
+        match a {
+            Ok(a) => {
+                let e = Evaluator::new();
+                let o = e.eval(a);
                 writeln!(stdout, "Eval:")?;
-                writeln!(stdout, "  {:?}", e)?;
+                writeln!(stdout, "  {:?}", o)?;
             }
             Err(_) => (),
         }
