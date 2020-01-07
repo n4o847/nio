@@ -12,14 +12,17 @@ pub fn start() -> io::Result<()> {
         let input = line?;
         let mut l = Lexer::new(&input[..]);
         writeln!(stdout, "Lexer:")?;
+        write!(stdout, "  ")?;
         loop {
             let token = l.next_token();
-            writeln!(stdout, "  {:?}", token)?;
+            write!(stdout, "{:?}", token)?;
             match token {
                 Token::EOF | Token::Unexpected(_) => break,
-                _ => (),
+                _ => {}
             };
+            write!(stdout, ", ")?;
         }
+        writeln!(stdout)?;
         let mut p = Parser::new(&input[..]);
         let a = p.parse_program();
         writeln!(stdout, "Parser:")?;
