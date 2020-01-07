@@ -5,6 +5,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum Object {
     Integer { value: i64 },
+    Nil,
 }
 
 #[derive(Debug)]
@@ -27,6 +28,13 @@ impl Evaluator {
 
     pub fn eval(&self, node: AST) -> Result<Object, Box<dyn Error>> {
         match node {
+            AST::Program { expressions } => {
+                let mut last = Object::Nil;
+                for expression in expressions {
+                    last = self.eval(expression)?
+                }
+                Ok(last)
+            }
             AST::InfixExpression { left, infix, right } => {
                 self.eval_infix_expression(*left, infix, *right)
             }
