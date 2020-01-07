@@ -1,5 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub enum Token {
+    Ident(String),
     Int(String),
     Add,
     Mul,
@@ -35,6 +36,17 @@ impl Lexer<'_> {
         self.skip_whitespace();
         if let Some((pos, ch)) = self.read_char() {
             match ch {
+                'a'..='z' => {
+                    while let Some(&(pos_end, ch)) = self.peek_char() {
+                        match ch {
+                            'a'..='z' | '0'..='9' => {
+                                self.read_char();
+                            }
+                            _ => return Token::Ident((&self.input[pos..pos_end]).to_string()),
+                        }
+                    }
+                    return Token::Ident((&self.input[pos..]).to_string());
+                }
                 '1'..='9' => {
                     while let Some(&(pos_end, ch)) = self.peek_char() {
                         match ch {

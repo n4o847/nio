@@ -22,6 +22,7 @@ pub fn eval(node: AST) -> Result<Object, Box<dyn Error>> {
     match node {
         AST::InfixExpression { left, infix, right } => eval_infix_expression(*left, infix, *right),
         AST::IntegerLiteral { raw } => eval_integer_literal(raw),
+        _ => unimplemented!(),
     }
 }
 

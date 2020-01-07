@@ -7,6 +7,9 @@ pub enum AST {
         infix: Infix,
         right: Box<AST>,
     },
+    IdentifierExpression {
+        name: String,
+    },
     IntegerLiteral {
         raw: String,
     },
@@ -75,6 +78,7 @@ impl Parser<'_> {
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<AST, &'static str> {
         let mut left = match self.curr_token {
+            Token::Ident(_) => self.parse_identifier_expression(),
             Token::Int(_) => self.parse_integer_literal(),
             _ => Err("Expected Expression"),
         }?;
@@ -104,6 +108,13 @@ impl Parser<'_> {
             infix,
             right: Box::new(right),
         })
+    }
+
+    fn parse_identifier_expression(&mut self) -> Result<AST, &'static str> {
+        match self.curr_token {
+            Token::Ident(ref name) => Ok(AST::IdentifierExpression { name: name.clone() }),
+            _ => Err("Expected IdentifierExpression"),
+        }
     }
 
     fn parse_integer_literal(&mut self) -> Result<AST, &'static str> {
