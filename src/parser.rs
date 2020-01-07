@@ -2,6 +2,9 @@ use crate::lexer::{Lexer, Token};
 
 #[derive(Debug, PartialEq)]
 pub enum AST {
+    Program {
+        expressions: Vec<AST>,
+    },
     InfixExpression {
         left: Box<AST>,
         infix: Infix,
@@ -67,13 +70,20 @@ impl Parser<'_> {
     }
 
     pub fn parse_program(&mut self) -> Result<AST, &'static str> {
-        let literal = self.parse_expression(Precedence::Lowest)?;
-        self.next_token();
-        if self.curr_token == Token::EOF {
-            Ok(literal)
-        } else {
-            Err("Expected EOF")
+        let mut expressions = Vec::new();
+        while self.curr_token != Token::EOF {
+            let literal = self.parse_expression(Precedence::Lowest)?;
+            self.next_token();
+            match self.curr_token {
+                Token::Semicolon => {
+                    self.next_token();
+                }
+                Token::EOF => (),
+                _ => return Err("Expected ;"),
+            }
+            expressions.push(literal);
         }
+        Ok(AST::Program { expressions })
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<AST, &'static str> {
@@ -82,7 +92,7 @@ impl Parser<'_> {
             Token::Int(_) => self.parse_integer_literal(),
             _ => Err("Expected Expression"),
         }?;
-        while self.peek_token != Token::EOF && precedence < self.peek_precedence() {
+        while precedence < self.peek_precedence() {
             left = match self.peek_token {
                 Token::Add | Token::Mul => {
                     self.next_token();
