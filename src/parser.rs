@@ -10,6 +10,10 @@ pub enum AST {
         infix: Infix,
         right: Box<AST>,
     },
+    AssignmentExpression {
+        left: String,
+        right: Box<AST>,
+    },
     IdentifierExpression {
         name: String,
     },
@@ -88,7 +92,10 @@ impl Parser<'_> {
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<AST, &'static str> {
         let mut left = match self.curr_token {
-            Token::Ident(_) => self.parse_identifier_expression(),
+            Token::Ident(_) => match self.peek_token {
+                Token::Assign => return self.parse_assignment_expression(),
+                _ => self.parse_identifier_expression(),
+            },
             Token::Int(_) => self.parse_integer_literal(),
             _ => Err("Expected Expression"),
         }?;
@@ -118,6 +125,20 @@ impl Parser<'_> {
             infix,
             right: Box::new(right),
         })
+    }
+
+    fn parse_assignment_expression(&mut self) -> Result<AST, &'static str> {
+        let name = match self.curr_token {
+            Token::Ident(ref name) => Ok(name.clone()),
+            _ => Err("Expected AssignmentExpression"),
+        }?;
+        self.next_token();
+        self.next_token();
+        let right = self.parse_expression(Precedence::Lowest)?;
+        return Ok(AST::AssignmentExpression {
+            left: name.clone(),
+            right: Box::new(right),
+        });
     }
 
     fn parse_identifier_expression(&mut self) -> Result<AST, &'static str> {

@@ -4,6 +4,7 @@ pub enum Token {
     Int(String),
     Add,
     Mul,
+    Assign,
     Semicolon,
     EOF,
     Unexpected(char),
@@ -61,6 +62,7 @@ impl Lexer<'_> {
                 }
                 '+' => Token::Add,
                 '*' => Token::Mul,
+                '=' => Token::Assign,
                 ';' => Token::Semicolon,
                 _ => Token::Unexpected(ch),
             }
