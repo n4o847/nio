@@ -29,7 +29,7 @@ pub fn start() -> io::Result<()> {
         writeln!(stdout, "  {:?}", a)?;
         match a {
             Ok(a) => {
-                let e = Evaluator::new();
+                let mut e = Evaluator::new();
                 let o = e.eval(a);
                 writeln!(stdout, "Eval:")?;
                 writeln!(stdout, "  {:?}", o)?;
