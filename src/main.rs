@@ -1,8 +1,10 @@
+mod eval;
 mod lexer;
 mod parser;
-mod eval;
 mod repl;
 
+use repl::Repl;
+
 fn main() {
-    repl::start().unwrap();
+    Repl::new().start().unwrap();
 }
