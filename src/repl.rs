@@ -21,6 +21,7 @@ impl Repl {
         let mut stdout = io::stdout();
         write!(stdout, "> ")?;
         stdout.flush()?;
+        let mut e = Evaluator::new();
         for line in stdin.lock().lines() {
             let input = line?;
             if self.lexer {
@@ -46,7 +47,6 @@ impl Repl {
             }
             match a {
                 Ok(a) => {
-                    let mut e = Evaluator::new();
                     let o = e.eval(a);
                     writeln!(stdout, "Eval:")?;
                     writeln!(stdout, "  {:?}", o)?;
