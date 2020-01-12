@@ -97,6 +97,7 @@ impl Parser<'_> {
                 _ => self.parse_identifier_expression(),
             },
             Token::Int(_) => self.parse_integer_literal(),
+            Token::Lparen => self.parse_grouped_expression(),
             _ => Err("Expected Expression"),
         }?;
         while precedence < self.peek_precedence() {
@@ -139,6 +140,16 @@ impl Parser<'_> {
             left: name.clone(),
             right: Box::new(right),
         });
+    }
+
+    fn parse_grouped_expression(&mut self) -> Result<AST, &'static str> {
+        self.next_token();
+        let expr = self.parse_expression(Precedence::Lowest);
+        if self.peek_token != Token::Rparen {
+            return Err("Expected )");
+        }
+        self.next_token();
+        return expr;
     }
 
     fn parse_identifier_expression(&mut self) -> Result<AST, &'static str> {

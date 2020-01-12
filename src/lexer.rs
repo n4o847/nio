@@ -5,6 +5,8 @@ pub enum Token {
     Add,
     Mul,
     Assign,
+    Lparen,
+    Rparen,
     Semicolon,
     EOF,
     Unexpected(char),
@@ -63,6 +65,8 @@ impl Lexer<'_> {
                 '+' => Token::Add,
                 '*' => Token::Mul,
                 '=' => Token::Assign,
+                '(' => Token::Lparen,
+                ')' => Token::Rparen,
                 ';' => Token::Semicolon,
                 _ => Token::Unexpected(ch),
             }
