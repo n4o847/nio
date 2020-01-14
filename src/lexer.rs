@@ -4,8 +4,10 @@ pub enum Token {
     Int(String),
     String(String),
     Add,
+    Sub,
     Mul,
     Assign,
+    Rarrow,
     Lparen,
     Rparen,
     Semicolon,
@@ -83,6 +85,19 @@ impl Lexer<'_> {
                     return Token::Unexpected('"');
                 }
                 '+' => Token::Add,
+                '-' => {
+                    if let Some(&(_, ch)) = self.peek_char() {
+                        match ch {
+                            '>' => {
+                                self.read_char();
+                                Token::Rarrow
+                            }
+                            _ => Token::Sub,
+                        }
+                    } else {
+                        Token::Sub
+                    }
+                }
                 '*' => Token::Mul,
                 '=' => Token::Assign,
                 '(' => Token::Lparen,
