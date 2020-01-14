@@ -25,6 +25,7 @@ pub enum AST {
 #[derive(Debug, PartialEq)]
 pub enum Infix {
     Add,
+    Sub,
     Mul,
 }
 
@@ -60,6 +61,7 @@ impl Parser<'_> {
     fn token_to_precedence(token: &Token) -> Precedence {
         match token {
             Token::Add => Precedence::Sum,
+            Token::Sub => Precedence::Sum,
             Token::Mul => Precedence::Product,
             _ => Precedence::Lowest,
         }
@@ -102,7 +104,7 @@ impl Parser<'_> {
         }?;
         while precedence < self.peek_precedence() {
             left = match self.peek_token {
-                Token::Add | Token::Mul => {
+                Token::Add | Token::Sub | Token::Mul => {
                     self.next_token();
                     self.parse_infix_expression(left)?
                 }
@@ -115,6 +117,7 @@ impl Parser<'_> {
     fn parse_infix_expression(&mut self, left: AST) -> Result<AST, &'static str> {
         let infix = match self.curr_token {
             Token::Add => Infix::Add,
+            Token::Sub => Infix::Sub,
             Token::Mul => Infix::Mul,
             _ => return Err("Expected InfixExpression"),
         };

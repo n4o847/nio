@@ -97,6 +97,9 @@ impl Evaluator {
             Infix::Add => Object::Integer {
                 value: left_value + right_value,
             },
+            Infix::Sub => Object::Integer {
+                value: left_value - right_value,
+            },
             Infix::Mul => Object::Integer {
                 value: left_value * right_value,
             },
