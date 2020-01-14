@@ -2,6 +2,7 @@
 pub enum Token {
     Ident(String),
     Int(String),
+    String(String),
     Add,
     Mul,
     Assign,
@@ -61,6 +62,25 @@ impl Lexer<'_> {
                         }
                     }
                     return Token::Int((&self.input[pos..]).to_string());
+                }
+                '"' => {
+                    while let Some(&(pos_end, ch)) = self.peek_char() {
+                        match ch {
+                            '\\' => {
+                                return Token::Unexpected('\\');
+                            }
+                            '"' => {
+                                self.read_char();
+                                return Token::String(
+                                    (&self.input[pos..pos_end + ch.len_utf8()]).to_string(),
+                                );
+                            }
+                            _ => {
+                                self.read_char();
+                            }
+                        }
+                    }
+                    return Token::Unexpected('"');
                 }
                 '+' => Token::Add,
                 '*' => Token::Mul,
