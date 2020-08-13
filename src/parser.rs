@@ -174,8 +174,10 @@ impl Parser<'_> {
 fn test_integer_literal() {
     assert_eq!(
         Parser::new("123").parse_program(),
-        Ok(AST::IntegerLiteral {
-            raw: "123".to_string()
+        Ok(AST::Program {
+            expressions: vec![AST::IntegerLiteral {
+                raw: "123".to_string()
+            }]
         })
     );
 }
@@ -184,26 +186,28 @@ fn test_integer_literal() {
 fn test_infix_expression() {
     assert_eq!(
         Parser::new("1 + 2 * 3 * 4").parse_program(),
-        Ok(AST::InfixExpression {
-            left: Box::new(AST::IntegerLiteral {
-                raw: "1".to_string()
-            }),
-            infix: Infix::Add,
-            right: Box::new(AST::InfixExpression {
-                left: Box::new(AST::InfixExpression {
-                    left: Box::new(AST::IntegerLiteral {
-                        raw: "2".to_string()
+        Ok(AST::Program {
+            expressions: vec![AST::InfixExpression {
+                left: Box::new(AST::IntegerLiteral {
+                    raw: "1".to_string()
+                }),
+                infix: Infix::Add,
+                right: Box::new(AST::InfixExpression {
+                    left: Box::new(AST::InfixExpression {
+                        left: Box::new(AST::IntegerLiteral {
+                            raw: "2".to_string()
+                        }),
+                        infix: Infix::Mul,
+                        right: Box::new(AST::IntegerLiteral {
+                            raw: "3".to_string()
+                        })
                     }),
                     infix: Infix::Mul,
                     right: Box::new(AST::IntegerLiteral {
-                        raw: "3".to_string()
+                        raw: "4".to_string()
                     })
-                }),
-                infix: Infix::Mul,
-                right: Box::new(AST::IntegerLiteral {
-                    raw: "4".to_string()
                 })
-            })
+            }]
         })
     );
 }
