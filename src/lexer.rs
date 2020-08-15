@@ -7,9 +7,11 @@ pub enum Token {
     Sub,
     Mul,
     Assign,
+    Vbar,
     Rarrow,
     Lparen,
     Rparen,
+    Comma,
     Semicolon,
     EOF,
     Unexpected(char),
@@ -100,8 +102,10 @@ impl Lexer<'_> {
                 }
                 '*' => Token::Mul,
                 '=' => Token::Assign,
+                '|' => Token::Vbar,
                 '(' => Token::Lparen,
                 ')' => Token::Rparen,
+                ',' => Token::Comma,
                 ';' => Token::Semicolon,
                 _ => Token::Unexpected(ch),
             }

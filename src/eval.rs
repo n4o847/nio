@@ -69,6 +69,7 @@ impl Evaluator {
             AST::AssignmentExpression { left, right } => {
                 self.eval_assignment_expression(left, *right)
             }
+            AST::LambdaExpression { args, body } => unimplemented!(),
             AST::IdentifierExpression { name } => self.eval_identifier(name),
             AST::IntegerLiteral { raw } => self.eval_integer_literal(raw),
             // _ => unimplemented!(),

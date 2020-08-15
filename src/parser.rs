@@ -14,6 +14,10 @@ pub enum AST {
         left: String,
         right: Box<AST>,
     },
+    LambdaExpression {
+        args: Vec<String>,
+        body: Box<AST>,
+    },
     IdentifierExpression {
         name: String,
     },
@@ -100,6 +104,7 @@ impl Parser<'_> {
             },
             Token::Int(_) => self.parse_integer_literal(),
             Token::Lparen => self.parse_grouped_expression(),
+            Token::Vbar => self.parse_lambda_expression(),
             _ => Err("Expected Expression"),
         }?;
         while precedence < self.peek_precedence() {
@@ -155,6 +160,33 @@ impl Parser<'_> {
         return expr;
     }
 
+    fn parse_lambda_expression(&mut self) -> Result<AST, &'static str> {
+        self.next_token();
+        let mut args = vec![];
+        if let Token::Ident(ref name) = self.curr_token {
+            args.push(name.clone());
+            self.next_token();
+            while let Token::Comma = self.curr_token {
+                self.next_token();
+                if let Token::Ident(ref name) = self.curr_token {
+                    args.push(name.clone());
+                    self.next_token();
+                } else {
+                    return Err("Expected Ident");
+                }
+            }
+        }
+        match self.curr_token {
+            Token::Vbar => self.next_token(),
+            _ => return Err("Expected |"),
+        }
+        let body = self.parse_expression(Precedence::Lowest)?;
+        Ok(AST::LambdaExpression {
+            args,
+            body: Box::new(body),
+        })
+    }
+
     fn parse_identifier_expression(&mut self) -> Result<AST, &'static str> {
         match self.curr_token {
             Token::Ident(ref name) => Ok(AST::IdentifierExpression { name: name.clone() }),
@@ -205,6 +237,27 @@ fn test_infix_expression() {
                     infix: Infix::Mul,
                     right: Box::new(AST::IntegerLiteral {
                         raw: "4".to_string()
+                    })
+                })
+            }]
+        })
+    );
+}
+
+#[test]
+fn test_lambda_expression() {
+    assert_eq!(
+        Parser::new("|x| x + 1").parse_program(),
+        Ok(AST::Program {
+            expressions: vec![AST::LambdaExpression {
+                args: vec!["x".to_string()],
+                body: Box::new(AST::InfixExpression {
+                    left: Box::new(AST::IdentifierExpression {
+                        name: "x".to_string()
+                    }),
+                    infix: Infix::Add,
+                    right: Box::new(AST::IntegerLiteral {
+                        raw: "1".to_string()
                     })
                 })
             }]
