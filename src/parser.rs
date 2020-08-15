@@ -15,7 +15,7 @@ pub enum AST {
         right: Box<AST>,
     },
     LambdaExpr {
-        args: Vec<String>,
+        params: Vec<String>,
         body: Box<AST>,
     },
     IdentExpr {
@@ -164,14 +164,14 @@ impl Parser<'_> {
 
     fn parse_lambda_expression(&mut self) -> ParseResult<AST> {
         self.next_token();
-        let mut args = vec![];
+        let mut params = vec![];
         if let Token::Ident(ref name) = self.curr_token {
-            args.push(name.clone());
+            params.push(name.clone());
             self.next_token();
             while let Token::Comma = self.curr_token {
                 self.next_token();
                 if let Token::Ident(ref name) = self.curr_token {
-                    args.push(name.clone());
+                    params.push(name.clone());
                     self.next_token();
                 } else {
                     return Err("Expected Ident");
@@ -184,7 +184,7 @@ impl Parser<'_> {
         }
         let body = self.parse_expr(Precedence::Lowest)?;
         Ok(AST::LambdaExpr {
-            args,
+            params,
             body: Box::new(body),
         })
     }
@@ -252,7 +252,7 @@ fn test_lambda_expression() {
         Parser::new("|x| x + 1").parse_program(),
         Ok(AST::Program {
             expressions: vec![AST::LambdaExpr {
-                args: vec!["x".to_string()],
+                params: vec!["x".to_string()],
                 body: Box::new(AST::InfixExpr {
                     left: Box::new(AST::IdentExpr {
                         name: "x".to_string()
