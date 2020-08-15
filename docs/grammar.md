@@ -1,19 +1,22 @@
 # Grammar
 
 ```
-program : expression ';' *
+program : expr ( ';' expr ) *
 
-expression : infix_expression
-           | assinment_expression
-           | identifier_expression
-           | integer_literal
-           | grouped_expression
+expr : infix_expr
+     | assinment_expr
+     | ident_expr
+     | grouped_expr
+     | lambda_expr
+     | int_literal
 
-infix_expression : expression infix expression
+infix_expr : expr infix expr
 
-assignment_expression : ident '=' expression
+assignment_expr : ident '=' expr
 
-grouped_expression : '(' expression ')'
+grouped_expr : '(' expr ')'
 
-identifier_expression : ident
+lambda_expr : '|' ( ident ( ',' ident ) * ) ? '|' expr
+
+ident_expr : ident
 ```
