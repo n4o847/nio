@@ -5,23 +5,23 @@ pub enum AST {
     Program {
         expressions: Vec<AST>,
     },
-    InfixExpression {
+    InfixExpr {
         left: Box<AST>,
         infix: Infix,
         right: Box<AST>,
     },
-    AssignmentExpression {
+    AssignmentExpr {
         left: String,
         right: Box<AST>,
     },
-    LambdaExpression {
+    LambdaExpr {
         args: Vec<String>,
         body: Box<AST>,
     },
-    IdentifierExpression {
+    IdentExpr {
         name: String,
     },
-    IntegerLiteral {
+    IntLiteral {
         raw: String,
     },
 }
@@ -82,7 +82,7 @@ impl Parser<'_> {
     pub fn parse_program(&mut self) -> Result<AST, &'static str> {
         let mut expressions = Vec::new();
         while self.curr_token != Token::EOF {
-            let literal = self.parse_expression(Precedence::Lowest)?;
+            let literal = self.parse_expr(Precedence::Lowest)?;
             self.next_token();
             match self.curr_token {
                 Token::Semicolon => {
@@ -96,7 +96,7 @@ impl Parser<'_> {
         Ok(AST::Program { expressions })
     }
 
-    fn parse_expression(&mut self, precedence: Precedence) -> Result<AST, &'static str> {
+    fn parse_expr(&mut self, precedence: Precedence) -> Result<AST, &'static str> {
         let mut left = match self.curr_token {
             Token::Ident(_) => match self.peek_token {
                 Token::Assign => return self.parse_assignment_expression(),
@@ -124,12 +124,12 @@ impl Parser<'_> {
             Token::Add => Infix::Add,
             Token::Sub => Infix::Sub,
             Token::Mul => Infix::Mul,
-            _ => return Err("Expected InfixExpression"),
+            _ => return Err("Expected InfixExpr"),
         };
         let precedence = self.curr_precedence();
         self.next_token();
-        let right = self.parse_expression(precedence)?;
-        Ok(AST::InfixExpression {
+        let right = self.parse_expr(precedence)?;
+        Ok(AST::InfixExpr {
             left: Box::new(left),
             infix,
             right: Box::new(right),
@@ -139,12 +139,12 @@ impl Parser<'_> {
     fn parse_assignment_expression(&mut self) -> Result<AST, &'static str> {
         let name = match self.curr_token {
             Token::Ident(ref name) => Ok(name.clone()),
-            _ => Err("Expected AssignmentExpression"),
+            _ => Err("Expected AssignmentExpr"),
         }?;
         self.next_token();
         self.next_token();
-        let right = self.parse_expression(Precedence::Lowest)?;
-        return Ok(AST::AssignmentExpression {
+        let right = self.parse_expr(Precedence::Lowest)?;
+        return Ok(AST::AssignmentExpr {
             left: name.clone(),
             right: Box::new(right),
         });
@@ -152,7 +152,7 @@ impl Parser<'_> {
 
     fn parse_grouped_expression(&mut self) -> Result<AST, &'static str> {
         self.next_token();
-        let expr = self.parse_expression(Precedence::Lowest);
+        let expr = self.parse_expr(Precedence::Lowest);
         if self.peek_token != Token::Rparen {
             return Err("Expected )");
         }
@@ -180,8 +180,8 @@ impl Parser<'_> {
             Token::Vbar => self.next_token(),
             _ => return Err("Expected |"),
         }
-        let body = self.parse_expression(Precedence::Lowest)?;
-        Ok(AST::LambdaExpression {
+        let body = self.parse_expr(Precedence::Lowest)?;
+        Ok(AST::LambdaExpr {
             args,
             body: Box::new(body),
         })
@@ -189,15 +189,15 @@ impl Parser<'_> {
 
     fn parse_identifier_expression(&mut self) -> Result<AST, &'static str> {
         match self.curr_token {
-            Token::Ident(ref name) => Ok(AST::IdentifierExpression { name: name.clone() }),
-            _ => Err("Expected IdentifierExpression"),
+            Token::Ident(ref name) => Ok(AST::IdentExpr { name: name.clone() }),
+            _ => Err("Expected IdentExpr"),
         }
     }
 
     fn parse_integer_literal(&mut self) -> Result<AST, &'static str> {
         match self.curr_token {
-            Token::Int(ref raw) => Ok(AST::IntegerLiteral { raw: raw.clone() }),
-            _ => Err("Expected IntegerLiteral"),
+            Token::Int(ref raw) => Ok(AST::IntLiteral { raw: raw.clone() }),
+            _ => Err("Expected IntLiteral"),
         }
     }
 }
@@ -207,7 +207,7 @@ fn test_integer_literal() {
     assert_eq!(
         Parser::new("123").parse_program(),
         Ok(AST::Program {
-            expressions: vec![AST::IntegerLiteral {
+            expressions: vec![AST::IntLiteral {
                 raw: "123".to_string()
             }]
         })
@@ -219,23 +219,23 @@ fn test_infix_expression() {
     assert_eq!(
         Parser::new("1 + 2 * 3 * 4").parse_program(),
         Ok(AST::Program {
-            expressions: vec![AST::InfixExpression {
-                left: Box::new(AST::IntegerLiteral {
+            expressions: vec![AST::InfixExpr {
+                left: Box::new(AST::IntLiteral {
                     raw: "1".to_string()
                 }),
                 infix: Infix::Add,
-                right: Box::new(AST::InfixExpression {
-                    left: Box::new(AST::InfixExpression {
-                        left: Box::new(AST::IntegerLiteral {
+                right: Box::new(AST::InfixExpr {
+                    left: Box::new(AST::InfixExpr {
+                        left: Box::new(AST::IntLiteral {
                             raw: "2".to_string()
                         }),
                         infix: Infix::Mul,
-                        right: Box::new(AST::IntegerLiteral {
+                        right: Box::new(AST::IntLiteral {
                             raw: "3".to_string()
                         })
                     }),
                     infix: Infix::Mul,
-                    right: Box::new(AST::IntegerLiteral {
+                    right: Box::new(AST::IntLiteral {
                         raw: "4".to_string()
                     })
                 })
@@ -249,14 +249,14 @@ fn test_lambda_expression() {
     assert_eq!(
         Parser::new("|x| x + 1").parse_program(),
         Ok(AST::Program {
-            expressions: vec![AST::LambdaExpression {
+            expressions: vec![AST::LambdaExpr {
                 args: vec!["x".to_string()],
-                body: Box::new(AST::InfixExpression {
-                    left: Box::new(AST::IdentifierExpression {
+                body: Box::new(AST::InfixExpr {
+                    left: Box::new(AST::IdentExpr {
                         name: "x".to_string()
                     }),
                     infix: Infix::Add,
-                    right: Box::new(AST::IntegerLiteral {
+                    right: Box::new(AST::IntLiteral {
                         raw: "1".to_string()
                     })
                 })

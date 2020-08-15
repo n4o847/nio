@@ -63,20 +63,16 @@ impl Evaluator {
                 }
                 Ok(last)
             }
-            AST::InfixExpression { left, infix, right } => {
-                self.eval_infix_expression(*left, infix, *right)
-            }
-            AST::AssignmentExpression { left, right } => {
-                self.eval_assignment_expression(left, *right)
-            }
-            AST::LambdaExpression { args, body } => unimplemented!(),
-            AST::IdentifierExpression { name } => self.eval_identifier(name),
-            AST::IntegerLiteral { raw } => self.eval_integer_literal(raw),
+            AST::InfixExpr { left, infix, right } => self.eval_infix_expr(*left, infix, *right),
+            AST::AssignmentExpr { left, right } => self.eval_assignment_expr(left, *right),
+            AST::LambdaExpr { args, body } => unimplemented!(),
+            AST::IdentExpr { name } => self.eval_ident(name),
+            AST::IntLiteral { raw } => self.eval_int_literal(raw),
             // _ => unimplemented!(),
         }
     }
 
-    fn eval_infix_expression(
+    fn eval_infix_expr(
         &mut self,
         left: AST,
         infix: Infix,
@@ -107,7 +103,7 @@ impl Evaluator {
         })))
     }
 
-    fn eval_assignment_expression(
+    fn eval_assignment_expr(
         &mut self,
         left: String,
         right: AST,
@@ -117,7 +113,7 @@ impl Evaluator {
         Ok(right)
     }
 
-    fn eval_identifier(&self, name: String) -> Result<Rc<RefCell<Object>>, Box<dyn Error>> {
+    fn eval_ident(&self, name: String) -> Result<Rc<RefCell<Object>>, Box<dyn Error>> {
         if let Some(value) = self.env.get(name) {
             Ok(value)
         } else {
@@ -125,7 +121,7 @@ impl Evaluator {
         }
     }
 
-    fn eval_integer_literal(&self, raw: String) -> Result<Rc<RefCell<Object>>, Box<dyn Error>> {
+    fn eval_int_literal(&self, raw: String) -> Result<Rc<RefCell<Object>>, Box<dyn Error>> {
         Ok(Rc::new(RefCell::new(Object::Integer {
             value: raw.parse()?,
         })))
