@@ -40,6 +40,8 @@ enum Precedence {
     Product,
 }
 
+type ParseResult<T> = Result<T, &'static str>;
+
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     curr_token: Token,
@@ -79,10 +81,10 @@ impl Parser<'_> {
         Parser::token_to_precedence(&self.peek_token)
     }
 
-    pub fn parse_program(&mut self) -> Result<AST, &'static str> {
+    pub fn parse_program(&mut self) -> ParseResult<AST> {
         let mut expressions = Vec::new();
         while self.curr_token != Token::EOF {
-            let literal = self.parse_expr(Precedence::Lowest)?;
+            let expr = self.parse_expr(Precedence::Lowest)?;
             self.next_token();
             match self.curr_token {
                 Token::Semicolon => {
@@ -91,12 +93,12 @@ impl Parser<'_> {
                 Token::EOF => (),
                 _ => return Err("Expected ;"),
             }
-            expressions.push(literal);
+            expressions.push(expr);
         }
         Ok(AST::Program { expressions })
     }
 
-    fn parse_expr(&mut self, precedence: Precedence) -> Result<AST, &'static str> {
+    fn parse_expr(&mut self, precedence: Precedence) -> ParseResult<AST> {
         let mut left = match self.curr_token {
             Token::Ident(_) => match self.peek_token {
                 Token::Assign => return self.parse_assignment_expression(),
@@ -105,7 +107,7 @@ impl Parser<'_> {
             Token::Int(_) => self.parse_integer_literal(),
             Token::Lparen => self.parse_grouped_expression(),
             Token::Vbar => self.parse_lambda_expression(),
-            _ => Err("Expected Expression"),
+            _ => Err("Expected Expr"),
         }?;
         while precedence < self.peek_precedence() {
             left = match self.peek_token {
@@ -119,7 +121,7 @@ impl Parser<'_> {
         Ok(left)
     }
 
-    fn parse_infix_expression(&mut self, left: AST) -> Result<AST, &'static str> {
+    fn parse_infix_expression(&mut self, left: AST) -> ParseResult<AST> {
         let infix = match self.curr_token {
             Token::Add => Infix::Add,
             Token::Sub => Infix::Sub,
@@ -136,7 +138,7 @@ impl Parser<'_> {
         })
     }
 
-    fn parse_assignment_expression(&mut self) -> Result<AST, &'static str> {
+    fn parse_assignment_expression(&mut self) -> ParseResult<AST> {
         let name = match self.curr_token {
             Token::Ident(ref name) => Ok(name.clone()),
             _ => Err("Expected AssignmentExpr"),
@@ -150,7 +152,7 @@ impl Parser<'_> {
         });
     }
 
-    fn parse_grouped_expression(&mut self) -> Result<AST, &'static str> {
+    fn parse_grouped_expression(&mut self) -> ParseResult<AST> {
         self.next_token();
         let expr = self.parse_expr(Precedence::Lowest);
         if self.peek_token != Token::Rparen {
@@ -160,7 +162,7 @@ impl Parser<'_> {
         return expr;
     }
 
-    fn parse_lambda_expression(&mut self) -> Result<AST, &'static str> {
+    fn parse_lambda_expression(&mut self) -> ParseResult<AST> {
         self.next_token();
         let mut args = vec![];
         if let Token::Ident(ref name) = self.curr_token {
@@ -187,14 +189,14 @@ impl Parser<'_> {
         })
     }
 
-    fn parse_identifier_expression(&mut self) -> Result<AST, &'static str> {
+    fn parse_identifier_expression(&mut self) -> ParseResult<AST> {
         match self.curr_token {
             Token::Ident(ref name) => Ok(AST::IdentExpr { name: name.clone() }),
             _ => Err("Expected IdentExpr"),
         }
     }
 
-    fn parse_integer_literal(&mut self) -> Result<AST, &'static str> {
+    fn parse_integer_literal(&mut self) -> ParseResult<AST> {
         match self.curr_token {
             Token::Int(ref raw) => Ok(AST::IntLiteral { raw: raw.clone() }),
             _ => Err("Expected IntLiteral"),
