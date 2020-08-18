@@ -81,6 +81,11 @@ impl Parser<'_> {
         Parser::token_to_precedence(&self.peek_token)
     }
 
+    pub fn parse(input: &str) -> ParseResult<AST> {
+        let mut p = Self::new(input);
+        p.parse_program()
+    }
+
     pub fn parse_program(&mut self) -> ParseResult<AST> {
         let mut expressions = Vec::new();
         while self.curr_token != Token::EOF {
@@ -207,7 +212,7 @@ impl Parser<'_> {
 #[test]
 fn test_integer_literal() {
     assert_eq!(
-        Parser::new("123").parse_program(),
+        Parser::parse("123"),
         Ok(AST::Program {
             expressions: vec![AST::IntLiteral {
                 raw: "123".to_string()
@@ -219,7 +224,7 @@ fn test_integer_literal() {
 #[test]
 fn test_infix_expression() {
     assert_eq!(
-        Parser::new("1 + 2 * 3 * 4").parse_program(),
+        Parser::parse("1 + 2 * 3 * 4"),
         Ok(AST::Program {
             expressions: vec![AST::InfixExpr {
                 left: Box::new(AST::IntLiteral {
@@ -249,7 +254,7 @@ fn test_infix_expression() {
 #[test]
 fn test_lambda_expression() {
     assert_eq!(
-        Parser::new("|x| x + 1").parse_program(),
+        Parser::parse("|x| x + 1"),
         Ok(AST::Program {
             expressions: vec![AST::LambdaExpr {
                 params: vec!["x".to_string()],

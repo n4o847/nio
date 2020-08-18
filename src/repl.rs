@@ -39,8 +39,7 @@ impl Repl {
                 }
                 writeln!(stdout)?;
             }
-            let mut p = Parser::new(&input[..]);
-            let a = p.parse_program();
+            let a = Parser::parse(&input[..]);
             if self.parser {
                 writeln!(stdout, "Parser:")?;
                 writeln!(stdout, "  {:?}", a)?;
