@@ -106,19 +106,19 @@ impl Parser<'_> {
     fn parse_expr(&mut self, precedence: Precedence) -> ParseResult<AST> {
         let mut left = match self.curr_token {
             Token::Ident(_) => match self.peek_token {
-                Token::Assign => return self.parse_assignment_expression(),
-                _ => self.parse_identifier_expression(),
+                Token::Assign => return self.parse_assignment_expr(),
+                _ => self.parse_ident_expr(),
             },
-            Token::Int(_) => self.parse_integer_literal(),
-            Token::Lparen => self.parse_grouped_expression(),
-            Token::Vbar => self.parse_lambda_expression(),
+            Token::Int(_) => self.parse_int_literal(),
+            Token::Lparen => self.parse_grouped_expr(),
+            Token::Vbar => self.parse_lambda_expr(),
             _ => Err("Expected Expr"),
         }?;
         while precedence < self.peek_precedence() {
             left = match self.peek_token {
                 Token::Add | Token::Sub | Token::Mul => {
                     self.next_token();
-                    self.parse_infix_expression(left)?
+                    self.parse_infix_expr(left)?
                 }
                 _ => return Ok(left),
             }
@@ -126,7 +126,7 @@ impl Parser<'_> {
         Ok(left)
     }
 
-    fn parse_infix_expression(&mut self, left: AST) -> ParseResult<AST> {
+    fn parse_infix_expr(&mut self, left: AST) -> ParseResult<AST> {
         let infix = match self.curr_token {
             Token::Add => Infix::Add,
             Token::Sub => Infix::Sub,
@@ -143,7 +143,7 @@ impl Parser<'_> {
         })
     }
 
-    fn parse_assignment_expression(&mut self) -> ParseResult<AST> {
+    fn parse_assignment_expr(&mut self) -> ParseResult<AST> {
         let name = match self.curr_token {
             Token::Ident(ref name) => Ok(name.clone()),
             _ => Err("Expected AssignmentExpr"),
@@ -157,7 +157,7 @@ impl Parser<'_> {
         });
     }
 
-    fn parse_grouped_expression(&mut self) -> ParseResult<AST> {
+    fn parse_grouped_expr(&mut self) -> ParseResult<AST> {
         self.next_token();
         let expr = self.parse_expr(Precedence::Lowest);
         if self.peek_token != Token::Rparen {
@@ -167,7 +167,7 @@ impl Parser<'_> {
         return expr;
     }
 
-    fn parse_lambda_expression(&mut self) -> ParseResult<AST> {
+    fn parse_lambda_expr(&mut self) -> ParseResult<AST> {
         self.next_token();
         let mut params = vec![];
         if let Token::Ident(ref name) = self.curr_token {
@@ -194,14 +194,14 @@ impl Parser<'_> {
         })
     }
 
-    fn parse_identifier_expression(&mut self) -> ParseResult<AST> {
+    fn parse_ident_expr(&mut self) -> ParseResult<AST> {
         match self.curr_token {
             Token::Ident(ref name) => Ok(AST::IdentExpr { name: name.clone() }),
             _ => Err("Expected IdentExpr"),
         }
     }
 
-    fn parse_integer_literal(&mut self) -> ParseResult<AST> {
+    fn parse_int_literal(&mut self) -> ParseResult<AST> {
         match self.curr_token {
             Token::Int(ref raw) => Ok(AST::IntLiteral { raw: raw.clone() }),
             _ => Err("Expected IntLiteral"),
@@ -210,7 +210,7 @@ impl Parser<'_> {
 }
 
 #[test]
-fn test_integer_literal() {
+fn test_int_literal() {
     assert_eq!(
         Parser::parse("123"),
         Ok(AST::Program {
@@ -222,7 +222,7 @@ fn test_integer_literal() {
 }
 
 #[test]
-fn test_infix_expression() {
+fn test_infix_expr() {
     assert_eq!(
         Parser::parse("1 + 2 * 3 * 4"),
         Ok(AST::Program {
@@ -252,7 +252,7 @@ fn test_infix_expression() {
 }
 
 #[test]
-fn test_lambda_expression() {
+fn test_lambda_expr() {
     assert_eq!(
         Parser::parse("|x| x + 1"),
         Ok(AST::Program {

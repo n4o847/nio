@@ -74,8 +74,8 @@ impl Evaluator {
         match node {
             AST::Program { expressions } => {
                 let mut last = Rc::new(RefCell::new(Object::Nil));
-                for expression in expressions {
-                    last = self.eval(expression)?
+                for expr in expressions {
+                    last = self.eval(expr)?
                 }
                 Ok(last)
             }
