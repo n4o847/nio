@@ -31,6 +31,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Environment {
+    outer: Option<Rc<RefCell<Environment>>>,
     store: HashMap<String, Rc<RefCell<Object>>>,
 }
 
@@ -42,14 +43,28 @@ impl std::fmt::Debug for Environment {
 }
 
 impl Environment {
-    fn new() -> Environment {
+    fn new() -> Self {
         Environment {
+            outer: None,
             store: HashMap::new(),
         }
     }
 
-    fn get(&self, name: String) -> Option<Rc<RefCell<Object>>> {
-        self.store.get(&name).map(Rc::clone)
+    fn new_from(outer: Rc<RefCell<Self>>) -> Self {
+        Environment {
+            outer: Some(outer),
+            store: HashMap::new(),
+        }
+    }
+
+    fn get(&self, name: &String) -> Option<Rc<RefCell<Object>>> {
+        if let Some(value) = self.store.get(name) {
+            Some(Rc::clone(value))
+        } else if let Some(env) = self.outer.as_ref() {
+            env.borrow().get(name)
+        } else {
+            None
+        }
     }
 
     fn set(&mut self, name: String, value: Rc<RefCell<Object>>) -> Option<Rc<RefCell<Object>>> {
@@ -70,7 +85,7 @@ impl Evaluator {
         }
     }
 
-    pub fn eval(&mut self, node: AST) -> EvalResult {
+    pub fn eval(&mut self, node: &AST) -> EvalResult {
         match node {
             AST::Program { expressions } => {
                 let mut last = Rc::new(RefCell::new(Object::Nil));
@@ -79,17 +94,17 @@ impl Evaluator {
                 }
                 Ok(last)
             }
-            AST::InfixExpr { left, infix, right } => self.eval_infix_expr(*left, infix, *right),
-            AST::AssignmentExpr { left, right } => self.eval_assignment_expr(left, *right),
-            AST::LambdaExpr { params, body } => self.eval_lambda_expr(params, *body),
-            AST::CallExpr { callee, args } => unimplemented!(),
+            AST::InfixExpr { left, infix, right } => self.eval_infix_expr(left, infix, right),
+            AST::AssignmentExpr { left, right } => self.eval_assignment_expr(left, right),
+            AST::LambdaExpr { params, body } => self.eval_lambda_expr(params, body),
+            AST::CallExpr { callee, args } => self.eval_call_expr(callee, args),
             AST::IdentExpr { name } => self.eval_ident(name),
             AST::IntLiteral { raw } => self.eval_int_literal(raw),
             // _ => unimplemented!(),
         }
     }
 
-    fn eval_infix_expr(&mut self, left: AST, infix: Infix, right: AST) -> EvalResult {
+    fn eval_infix_expr(&mut self, left: &AST, infix: &Infix, right: &AST) -> EvalResult {
         let left = self.eval(left)?;
         let right = self.eval(right)?;
         let left_value = if let Object::Integer { value } = *left.borrow() {
@@ -115,21 +130,42 @@ impl Evaluator {
         })))
     }
 
-    fn eval_assignment_expr(&mut self, left: String, right: AST) -> EvalResult {
+    fn eval_assignment_expr(&mut self, left: &String, right: &AST) -> EvalResult {
         let right = self.eval(right)?;
-        self.env.borrow_mut().set(left, Rc::clone(&right));
+        self.env.borrow_mut().set(left.clone(), Rc::clone(&right));
         Ok(right)
     }
 
-    fn eval_lambda_expr(&mut self, params: Vec<String>, body: AST) -> EvalResult {
+    fn eval_lambda_expr(&mut self, params: &Vec<String>, body: &AST) -> EvalResult {
         Ok(Rc::new(RefCell::new(Object::Lambda {
-            params,
-            body,
+            params: params.clone(),
+            body: body.clone(),
             env: Rc::clone(&self.env),
         })))
     }
 
-    fn eval_ident(&self, name: String) -> EvalResult {
+    fn eval_call_expr(&mut self, callee: &AST, args: &Vec<AST>) -> EvalResult {
+        let callee = self.eval(callee)?;
+        match &*Rc::clone(&callee).borrow() {
+            Object::Lambda { params, body, env } => {
+                if params.len() != args.len() {
+                    return Err(Box::new(EvalError("arguments error")));
+                }
+                let mut env = Environment::new_from(Rc::clone(&env));
+                for i in 0..params.len() {
+                    let arg = self.eval(&args[i])?;
+                    env.set(params[i].to_string(), arg);
+                }
+                Self {
+                    env: Rc::new(RefCell::new(env)),
+                }
+                .eval(&body)
+            }
+            _ => Err(Box::new(EvalError("callee is not a function"))),
+        }
+    }
+
+    fn eval_ident(&self, name: &String) -> EvalResult {
         if let Some(value) = self.env.borrow().get(name) {
             Ok(value)
         } else {
@@ -137,7 +173,7 @@ impl Evaluator {
         }
     }
 
-    fn eval_int_literal(&self, raw: String) -> EvalResult {
+    fn eval_int_literal(&self, raw: &String) -> EvalResult {
         Ok(Rc::new(RefCell::new(Object::Integer {
             value: raw.parse()?,
         })))

@@ -1,6 +1,6 @@
 use crate::lexer::{Lexer, Token};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum AST {
     Program {
         expressions: Vec<AST>,
@@ -30,7 +30,7 @@ pub enum AST {
     },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Infix {
     Add,
     Sub,

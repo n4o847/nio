@@ -44,7 +44,7 @@ impl Repl {
                 writeln!(stdout, "Parser:")?;
                 writeln!(stdout, "  {:?}", a)?;
             }
-            match a {
+            match &a {
                 Ok(a) => {
                     let o = e.eval(a);
                     writeln!(stdout, "Eval:")?;
