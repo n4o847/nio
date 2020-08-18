@@ -18,6 +18,10 @@ pub enum AST {
         params: Vec<String>,
         body: Box<AST>,
     },
+    CallExpr {
+        callee: Box<AST>,
+        args: Vec<AST>,
+    },
     IdentExpr {
         name: String,
     },
@@ -38,6 +42,7 @@ enum Precedence {
     Lowest,
     Sum,
     Product,
+    Call,
 }
 
 type ParseResult<T> = Result<T, &'static str>;
@@ -69,6 +74,7 @@ impl Parser<'_> {
             Token::Add => Precedence::Sum,
             Token::Sub => Precedence::Sum,
             Token::Mul => Precedence::Product,
+            Token::Lparen => Precedence::Call,
             _ => Precedence::Lowest,
         }
     }
@@ -119,6 +125,10 @@ impl Parser<'_> {
                 Token::Add | Token::Sub | Token::Mul => {
                     self.next_token();
                     self.parse_infix_expr(left)?
+                }
+                Token::Lparen => {
+                    self.next_token();
+                    self.parse_call_expr(left)?
                 }
                 _ => return Ok(left),
             }
@@ -194,6 +204,33 @@ impl Parser<'_> {
         })
     }
 
+    fn parse_call_expr(&mut self, callee: AST) -> ParseResult<AST> {
+        if self.peek_token == Token::Rparen {
+            self.next_token();
+            return Ok(AST::CallExpr {
+                callee: Box::new(callee),
+                args: vec![],
+            });
+        }
+        self.next_token();
+        let mut args = vec![];
+        args.push(self.parse_expr(Precedence::Lowest)?);
+        while self.peek_token == Token::Comma {
+            self.next_token();
+            self.next_token();
+            args.push(self.parse_expr(Precedence::Lowest)?);
+        }
+        if self.peek_token == Token::Rparen {
+            self.next_token();
+            Ok(AST::CallExpr {
+                callee: Box::new(callee),
+                args,
+            })
+        } else {
+            Err("Expected , or )")
+        }
+    }
+
     fn parse_ident_expr(&mut self) -> ParseResult<AST> {
         match self.curr_token {
             Token::Ident(ref name) => Ok(AST::IdentExpr { name: name.clone() }),
@@ -266,6 +303,34 @@ fn test_lambda_expr() {
                     right: Box::new(AST::IntLiteral {
                         raw: "1".to_string()
                     })
+                })
+            }]
+        })
+    );
+}
+
+#[test]
+fn test_call_expr() {
+    assert_eq!(
+        Parser::parse("a + b(x, y)"),
+        Ok(AST::Program {
+            expressions: vec![AST::InfixExpr {
+                left: Box::new(AST::IdentExpr {
+                    name: "a".to_string()
+                }),
+                infix: Infix::Add,
+                right: Box::new(AST::CallExpr {
+                    callee: Box::new(AST::IdentExpr {
+                        name: "b".to_string()
+                    }),
+                    args: vec![
+                        AST::IdentExpr {
+                            name: "x".to_string()
+                        },
+                        AST::IdentExpr {
+                            name: "y".to_string()
+                        }
+                    ]
                 })
             }]
         })

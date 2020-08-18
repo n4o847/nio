@@ -82,6 +82,7 @@ impl Evaluator {
             AST::InfixExpr { left, infix, right } => self.eval_infix_expr(*left, infix, *right),
             AST::AssignmentExpr { left, right } => self.eval_assignment_expr(left, *right),
             AST::LambdaExpr { params, body } => self.eval_lambda_expr(params, *body),
+            AST::CallExpr { callee, args } => unimplemented!(),
             AST::IdentExpr { name } => self.eval_ident(name),
             AST::IntLiteral { raw } => self.eval_int_literal(raw),
             // _ => unimplemented!(),
