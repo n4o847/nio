@@ -4,7 +4,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum Object {
-    Integer {
+    Int {
         value: i64,
     },
     String {
@@ -111,24 +111,24 @@ impl Evaluator {
     fn eval_infix_expr(&mut self, left: &AST, infix: &Infix, right: &AST) -> EvalResult {
         let left = self.eval(left)?;
         let right = self.eval(right)?;
-        let left_value = if let Object::Integer { value } = *left.borrow() {
+        let left_value = if let Object::Int { value } = *left.borrow() {
             value
         } else {
             return Err(Box::new(EvalError("type mismatch")));
         };
-        let right_value = if let Object::Integer { value } = *right.borrow() {
+        let right_value = if let Object::Int { value } = *right.borrow() {
             value
         } else {
             return Err(Box::new(EvalError("type mismatch")));
         };
         Ok(Rc::new(RefCell::new(match infix {
-            Infix::Add => Object::Integer {
+            Infix::Add => Object::Int {
                 value: left_value + right_value,
             },
-            Infix::Sub => Object::Integer {
+            Infix::Sub => Object::Int {
                 value: left_value - right_value,
             },
-            Infix::Mul => Object::Integer {
+            Infix::Mul => Object::Int {
                 value: left_value * right_value,
             },
         })))
@@ -178,7 +178,7 @@ impl Evaluator {
     }
 
     fn eval_int_literal(&self, raw: &String) -> EvalResult {
-        Ok(Rc::new(RefCell::new(Object::Integer {
+        Ok(Rc::new(RefCell::new(Object::Int {
             value: raw.parse()?,
         })))
     }
