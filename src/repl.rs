@@ -9,8 +9,8 @@ pub struct Repl {
 }
 
 impl Repl {
-    pub fn new() -> Repl {
-        Repl {
+    pub fn new() -> Self {
+        Self {
             lexer: true,
             parser: true,
         }
@@ -25,7 +25,7 @@ impl Repl {
         for line in stdin.lock().lines() {
             let input = line?;
             if self.lexer {
-                let mut l = Lexer::new(&input[..]);
+                let mut l = Lexer::new(input.as_str());
                 writeln!(stdout, "Lexer:")?;
                 write!(stdout, "  ")?;
                 loop {
@@ -39,7 +39,7 @@ impl Repl {
                 }
                 writeln!(stdout)?;
             }
-            let a = Parser::parse(&input[..]);
+            let a = Parser::parse(input.as_str());
             if self.parser {
                 writeln!(stdout, "Parser:")?;
                 writeln!(stdout, "  {:?}", a)?;

@@ -165,10 +165,10 @@ impl Parser<'_> {
         self.next_token();
         self.next_token();
         let right = self.parse_expr(Precedence::Lowest)?;
-        return Ok(AST::AssignmentExpr {
+        Ok(AST::AssignmentExpr {
             left: name.clone(),
             right: Box::new(right),
-        });
+        })
     }
 
     fn parse_grouped_expr(&mut self) -> ParseResult<AST> {
@@ -178,12 +178,12 @@ impl Parser<'_> {
             return Err("Expected )");
         }
         self.next_token();
-        return expr;
+        expr
     }
 
     fn parse_lambda_expr(&mut self) -> ParseResult<AST> {
         self.next_token();
-        let mut params = vec![];
+        let mut params = Vec::new();
         if let Token::Ident(ref name) = self.curr_token {
             params.push(name.clone());
             self.next_token();
@@ -213,11 +213,11 @@ impl Parser<'_> {
             self.next_token();
             return Ok(AST::CallExpr {
                 callee: Box::new(callee),
-                args: vec![],
+                args: Vec::new(),
             });
         }
         self.next_token();
-        let mut args = vec![];
+        let mut args = Vec::new();
         args.push(self.parse_expr(Precedence::Lowest)?);
         while self.peek_token == Token::Comma {
             self.next_token();

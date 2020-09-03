@@ -1,6 +1,9 @@
 use crate::parser::{Infix, AST};
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub enum Object {
@@ -22,24 +25,21 @@ pub enum Object {
 struct EvalError(&'static str);
 
 impl fmt::Display for EvalError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.0)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)?;
+        Ok(())
     }
 }
 
 impl Error for EvalError {}
-
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
 
 pub struct Environment {
     outer: Option<Rc<RefCell<Environment>>>,
     store: HashMap<String, Rc<RefCell<Object>>>,
 }
 
-impl std::fmt::Debug for Environment {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for Environment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Env")?;
         Ok(())
     }
@@ -47,14 +47,14 @@ impl std::fmt::Debug for Environment {
 
 impl Environment {
     fn new() -> Self {
-        Environment {
+        Self {
             outer: None,
             store: HashMap::new(),
         }
     }
 
     fn new_from(outer: Rc<RefCell<Self>>) -> Self {
-        Environment {
+        Self {
             outer: Some(outer),
             store: HashMap::new(),
         }
@@ -83,7 +83,7 @@ pub struct Evaluator {
 
 impl Evaluator {
     pub fn new() -> Evaluator {
-        Evaluator {
+        Self {
             env: Rc::new(RefCell::new(Environment::new())),
         }
     }
@@ -184,7 +184,7 @@ impl Evaluator {
     }
 
     fn eval_string_literal(&self, raw: &String) -> EvalResult {
-        let mut value = vec![];
+        let mut value = Vec::new();
         let mut chars = raw.chars();
         match chars.next() {
             Some('"') => loop {

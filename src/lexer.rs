@@ -1,3 +1,6 @@
+use std::iter::Peekable;
+use std::str::CharIndices;
+
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Ident(String),
@@ -17,9 +20,6 @@ pub enum Token {
     Unexpected(char),
 }
 
-use std::iter::Peekable;
-use std::str::CharIndices;
-
 pub struct Lexer<'a> {
     input: &'a str,
     char_indices: Peekable<CharIndices<'a>>,
@@ -28,7 +28,7 @@ pub struct Lexer<'a> {
 impl Lexer<'_> {
     pub fn new(input: &str) -> Lexer {
         Lexer {
-            input: input,
+            input,
             char_indices: input.char_indices().peekable(),
         }
     }
@@ -51,7 +51,7 @@ impl Lexer<'_> {
                             'a'..='z' | '0'..='9' => {
                                 self.read_char();
                             }
-                            _ => return Token::Ident((&self.input[pos..pos_end]).to_string()),
+                            _ => return Token::Ident(self.input[pos..pos_end].to_string()),
                         }
                     }
                     return Token::Ident((&self.input[pos..]).to_string());
@@ -62,7 +62,7 @@ impl Lexer<'_> {
                             '0'..='9' => {
                                 self.read_char();
                             }
-                            _ => return Token::Int((&self.input[pos..pos_end]).to_string()),
+                            _ => return Token::Int(self.input[pos..pos_end].to_string()),
                         }
                     }
                     return Token::Int((&self.input[pos..]).to_string());
@@ -76,7 +76,7 @@ impl Lexer<'_> {
                             '"' => {
                                 self.read_char();
                                 return Token::String(
-                                    (&self.input[pos..pos_end + ch.len_utf8()]).to_string(),
+                                    self.input[pos..pos_end + ch.len_utf8()].to_string(),
                                 );
                             }
                             _ => {
