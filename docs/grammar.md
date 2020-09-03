@@ -10,6 +10,7 @@ expr : infix_expr
      | lambda_expr
      | call_expr
      | int_literal
+     | string_literal
 
 infix_expr : expr infix expr
 
