@@ -7,6 +7,9 @@ pub enum Object {
     Integer {
         value: i64,
     },
+    String {
+        value: Vec<char>,
+    },
     Nil,
     Lambda {
         params: Vec<String>,
@@ -100,6 +103,7 @@ impl Evaluator {
             AST::CallExpr { callee, args } => self.eval_call_expr(callee, args),
             AST::IdentExpr { name } => self.eval_ident(name),
             AST::IntLiteral { raw } => self.eval_int_literal(raw),
+            AST::StringLiteral { raw } => self.eval_string_literal(raw),
             // _ => unimplemented!(),
         }
     }
@@ -177,5 +181,28 @@ impl Evaluator {
         Ok(Rc::new(RefCell::new(Object::Integer {
             value: raw.parse()?,
         })))
+    }
+
+    fn eval_string_literal(&self, raw: &String) -> EvalResult {
+        let mut value = vec![];
+        let mut chars = raw.chars();
+        match chars.next() {
+            Some('"') => loop {
+                match chars.next() {
+                    Some('\\') => {
+                        unimplemented!();
+                    }
+                    Some('"') => {
+                        break;
+                    }
+                    Some(ch) => {
+                        value.push(ch);
+                    }
+                    None => unreachable!(),
+                }
+            },
+            _ => unreachable!(),
+        }
+        Ok(Rc::new(RefCell::new(Object::String { value })))
     }
 }

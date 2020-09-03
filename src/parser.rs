@@ -28,6 +28,9 @@ pub enum AST {
     IntLiteral {
         raw: String,
     },
+    StringLiteral {
+        raw: String,
+    },
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -116,6 +119,7 @@ impl Parser<'_> {
                 _ => self.parse_ident_expr(),
             },
             Token::Int(_) => self.parse_int_literal(),
+            Token::String(_) => self.parse_string_literal(),
             Token::Lparen => self.parse_grouped_expr(),
             Token::Vbar => self.parse_lambda_expr(),
             _ => Err("Expected Expr"),
@@ -242,6 +246,13 @@ impl Parser<'_> {
         match self.curr_token {
             Token::Int(ref raw) => Ok(AST::IntLiteral { raw: raw.clone() }),
             _ => Err("Expected IntLiteral"),
+        }
+    }
+
+    fn parse_string_literal(&mut self) -> ParseResult<AST> {
+        match self.curr_token {
+            Token::String(ref raw) => Ok(AST::StringLiteral { raw: raw.clone() }),
+            _ => Err("Expected StringLiteral"),
         }
     }
 }
