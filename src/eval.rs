@@ -1,8 +1,10 @@
 use crate::parser::{Infix, AST};
 use std::cell::RefCell;
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
 #[derive(Debug)]
@@ -45,7 +47,9 @@ pub struct Env(Rc<RefCell<EnvInner>>);
 
 impl fmt::Debug for Env {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Env")?;
+        let mut hasher = DefaultHasher::new();
+        self.0.as_ptr().hash(&mut hasher);
+        write!(f, "Env({:#016x})", hasher.finish())?;
         Ok(())
     }
 }
