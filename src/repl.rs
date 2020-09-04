@@ -1,4 +1,4 @@
-use crate::eval::Evaluator;
+use crate::eval::Env;
 use crate::lexer::{Lexer, Token};
 use crate::parser::Parser;
 use std::io::{self, BufRead, Write};
@@ -21,7 +21,7 @@ impl Repl {
         let mut stdout = io::stdout();
         write!(stdout, "> ")?;
         stdout.flush()?;
-        let mut e = Evaluator::new();
+        let mut e = Env::new();
         for line in stdin.lock().lines() {
             let input = line?;
             if self.lexer {

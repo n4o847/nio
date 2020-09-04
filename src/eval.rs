@@ -17,7 +17,7 @@ pub enum Object {
     Lambda {
         params: Vec<String>,
         body: AST,
-        env: Rc<RefCell<Environment>>,
+        env: Env,
     },
 }
 
@@ -33,59 +33,56 @@ impl fmt::Display for EvalError {
 
 impl Error for EvalError {}
 
-pub struct Environment {
-    outer: Option<Rc<RefCell<Environment>>>,
+type EvalResult = Result<Rc<RefCell<Object>>, Box<dyn Error>>;
+
+struct EnvInner {
+    outer: Option<Env>,
     store: HashMap<String, Rc<RefCell<Object>>>,
 }
 
-impl fmt::Debug for Environment {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+// newtype pattern
+pub struct Env(Rc<RefCell<EnvInner>>);
+
+impl fmt::Debug for Env {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Env")?;
         Ok(())
     }
 }
 
-impl Environment {
-    fn new() -> Self {
-        Self {
+impl Clone for Env {
+    fn clone(&self) -> Self {
+        Self(Rc::clone(&self.0))
+    }
+}
+
+impl Env {
+    pub fn new() -> Self {
+        Self(Rc::new(RefCell::new(EnvInner {
             outer: None,
             store: HashMap::new(),
-        }
+        })))
     }
 
-    fn new_from(outer: Rc<RefCell<Self>>) -> Self {
-        Self {
-            outer: Some(outer),
+    fn inherit_from(outer: &Self) -> Self {
+        Self(Rc::new(RefCell::new(EnvInner {
+            outer: Some(outer.clone()),
             store: HashMap::new(),
-        }
+        })))
     }
 
     fn get(&self, name: &String) -> Option<Rc<RefCell<Object>>> {
-        if let Some(value) = self.store.get(name) {
+        if let Some(value) = self.0.borrow().store.get(name) {
             Some(Rc::clone(value))
-        } else if let Some(env) = self.outer.as_ref() {
-            env.borrow().get(name)
+        } else if let Some(env) = self.0.borrow().outer.as_ref() {
+            env.get(name)
         } else {
             None
         }
     }
 
     fn set(&mut self, name: String, value: Rc<RefCell<Object>>) -> Option<Rc<RefCell<Object>>> {
-        self.store.insert(name, value)
-    }
-}
-
-type EvalResult = Result<Rc<RefCell<Object>>, Box<dyn Error>>;
-
-pub struct Evaluator {
-    env: Rc<RefCell<Environment>>,
-}
-
-impl Evaluator {
-    pub fn new() -> Evaluator {
-        Self {
-            env: Rc::new(RefCell::new(Environment::new())),
-        }
+        self.0.borrow_mut().store.insert(name, value)
     }
 
     pub fn eval(&mut self, node: &AST) -> EvalResult {
@@ -136,7 +133,7 @@ impl Evaluator {
 
     fn eval_assignment_expr(&mut self, left: &String, right: &AST) -> EvalResult {
         let right = self.eval(right)?;
-        self.env.borrow_mut().set(left.clone(), Rc::clone(&right));
+        self.set(left.clone(), Rc::clone(&right));
         Ok(right)
     }
 
@@ -144,7 +141,7 @@ impl Evaluator {
         Ok(Rc::new(RefCell::new(Object::Lambda {
             params: params.clone(),
             body: body.clone(),
-            env: Rc::clone(&self.env),
+            env: self.clone(),
         })))
     }
 
@@ -155,22 +152,19 @@ impl Evaluator {
                 if params.len() != args.len() {
                     return Err(Box::new(EvalError("arguments error")));
                 }
-                let mut env = Environment::new_from(Rc::clone(&env));
+                let mut env = Env::inherit_from(env);
                 for i in 0..params.len() {
                     let arg = self.eval(&args[i])?;
                     env.set(params[i].to_string(), arg);
                 }
-                Self {
-                    env: Rc::new(RefCell::new(env)),
-                }
-                .eval(&body)
+                env.eval(body)
             }
             _ => Err(Box::new(EvalError("callee is not a function"))),
         }
     }
 
     fn eval_ident(&self, name: &String) -> EvalResult {
-        if let Some(value) = self.env.borrow().get(name) {
+        if let Some(value) = self.get(name) {
             Ok(value)
         } else {
             Err(Box::new(EvalError("identifier not found")))
