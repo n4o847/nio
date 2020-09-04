@@ -21,6 +21,9 @@ pub enum Object {
         body: AST,
         env: Env,
     },
+    NativeFunction {
+        function: fn(Vec<Rc<RefCell<Object>>>) -> Rc<RefCell<Object>>,
+    },
 }
 
 #[derive(Debug)]
@@ -75,7 +78,7 @@ impl Env {
         })))
     }
 
-    fn get(&self, name: &String) -> Option<Rc<RefCell<Object>>> {
+    pub fn get(&self, name: &String) -> Option<Rc<RefCell<Object>>> {
         if let Some(value) = self.0.borrow().store.get(name) {
             Some(Rc::clone(value))
         } else if let Some(env) = self.0.borrow().outer.as_ref() {
@@ -85,7 +88,7 @@ impl Env {
         }
     }
 
-    fn set(&mut self, name: String, value: Rc<RefCell<Object>>) -> Option<Rc<RefCell<Object>>> {
+    pub fn set(&mut self, name: String, value: Rc<RefCell<Object>>) -> Option<Rc<RefCell<Object>>> {
         self.0.borrow_mut().store.insert(name, value)
     }
 
@@ -162,6 +165,13 @@ impl Env {
                     env.set(params[i].to_string(), arg);
                 }
                 env.eval(body)
+            }
+            Object::NativeFunction { function } => {
+                let args = args
+                    .iter()
+                    .map(|arg| self.eval(arg))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(function(args))
             }
             _ => Err(Box::new(EvalError("callee is not a function"))),
         }

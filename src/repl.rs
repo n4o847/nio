@@ -1,6 +1,7 @@
 use crate::eval::Env;
 use crate::lexer::{Lexer, Token};
 use crate::parser::Parser;
+use crate::prelude;
 use std::io::{self, BufRead, Write};
 
 pub struct Repl {
@@ -22,6 +23,7 @@ impl Repl {
         write!(stdout, "> ")?;
         stdout.flush()?;
         let mut e = Env::new();
+        prelude::init(&mut e);
         for line in stdin.lock().lines() {
             let input = line?;
             if self.lexer {
