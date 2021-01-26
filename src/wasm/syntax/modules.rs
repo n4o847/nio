@@ -19,25 +19,25 @@ pub struct Module {
 
 // Indices
 
-pub struct TypeIdx(u32);
+pub struct TypeIdx(pub u32);
 
-pub struct FuncIdx(u32);
+pub struct FuncIdx(pub u32);
 
-pub struct TableIdx(u32);
+pub struct TableIdx(pub u32);
 
-pub struct MemIdx(u32);
+pub struct MemIdx(pub u32);
 
-pub struct GlobalIdx(u32);
+pub struct GlobalIdx(pub u32);
 
-pub struct LocalIdx(u32);
+pub struct LocalIdx(pub u32);
 
-pub struct LabelIdx(u32);
+pub struct LabelIdx(pub u32);
 
 // Functions
 
 pub struct Func {
   pub r#type: TypeIdx,
-  pub locals: ValType,
+  pub locals: Vec<ValType>,
   pub body: Expr,
 }
 

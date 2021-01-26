@@ -2,6 +2,7 @@
 
 // Value Types
 
+#[derive(PartialEq, Eq)]
 pub enum ValType {
   I32,
   I64,
