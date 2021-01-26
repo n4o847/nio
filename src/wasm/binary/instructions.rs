@@ -1,14 +1,14 @@
-// https://webassembly.github.io/spec/core/binary/instructions.html
-
 use super::super::syntax::instructions::*;
 use super::*;
+
+// https://webassembly.github.io/spec/core/binary/instructions.html
 
 macro_rules! bin {
   ($e:ident;) => {};
   ($e:ident; u32($x:expr) $(, $($t:tt)*)?) => {
     $e.write_u32($x)?;
     $(
-      bin![$e; $($t)*]
+      bin![$e; $($t)*];
     )?
   };
   ($e:ident; i32($x:expr) $(, $($t:tt)*)?) => {
@@ -19,6 +19,12 @@ macro_rules! bin {
   };
   ($e:ident; f32($x:expr) $(, $($t:tt)*)?) => {
     $e.write_f32($x)?;
+    $(
+      bin![$e; $($t)*];
+    )?
+  };
+  ($e:ident; f64($x:expr) $(, $($t:tt)*)?) => {
+    $e.write_f64($x)?;
     $(
       bin![$e; $($t)*];
     )?
@@ -100,7 +106,7 @@ impl Emitter<'_> {
       I32Const(n) => bin![0x41, i32(*n)],
       I64Const(n) => todo!(),
       F32Const(z) => bin![0x43, f32(*z)],
-      F64Const(z) => todo!(),
+      F64Const(z) => bin![0x44, f64(*z)],
 
       I32Eqz => bin![0x45],
       I32Eq => bin![0x46],
@@ -159,18 +165,95 @@ impl Emitter<'_> {
       I32Rotl => bin![0x77],
       I32Rotr => bin![0x78],
 
-      // I64Clz => {}
+      I64Clz => bin![0x79],
+      I64Ctz => bin![0x7a],
+      I64Popcnt => bin![0x7b],
+      I64Add => bin![0x7c],
+      I64Sub => bin![0x7d],
+      I64Mul => bin![0x7e],
+      I64DivS => bin![0x7f],
+      I64DivU => bin![0x80],
+      I64RemS => bin![0x81],
+      I64RemU => bin![0x82],
+      I64And => bin![0x83],
+      I64Or => bin![0x84],
+      I64Xor => bin![0x85],
+      I64Shl => bin![0x86],
+      I64ShrS => bin![0x87],
+      I64ShrU => bin![0x88],
+      I64Rotl => bin![0x89],
+      I64Rotr => bin![0x8a],
 
-      // F32Abs => {}
+      F32Abs => bin![0x8b],
+      F32Neg => bin![0x8c],
+      F32Ceil => bin![0x8d],
+      F32Floor => bin![0x8e],
+      F32Trunc => bin![0x8f],
+      F32Nearest => bin![0x90],
+      F32Sqrt => bin![0x91],
+      F32Add => bin![0x92],
+      F32Sub => bin![0x93],
+      F32Mul => bin![0x94],
+      F32Div => bin![0x95],
+      F32Min => bin![0x96],
+      F32Max => bin![0x97],
+      F32Copysign => bin![0x98],
 
-      // F64Abs => {}
+      F64Abs => bin![0x99],
+      F64Neg => bin![0x9a],
+      F64Ceil => bin![0x9b],
+      F64Floor => bin![0x9c],
+      F64Trunc => bin![0x9d],
+      F64Nearest => bin![0x9e],
+      F64Sqrt => bin![0x9f],
+      F64Add => bin![0xa0],
+      F64Sub => bin![0xa1],
+      F64Mul => bin![0xa2],
+      F64Div => bin![0xa3],
+      F64Min => bin![0xa4],
+      F64Max => bin![0xa5],
+      F64Copysign => bin![0xa6],
 
-      // I32WrapI64 => {}
+      I32WrapI64 => bin![0xa7],
+      I32TruncF32S => bin![0xa8],
+      I32TruncF32U => bin![0xa9],
+      I32TruncF64S => bin![0xaa],
+      I32TruncF64U => bin![0xab],
+      I64ExtendI32S => bin![0xac],
+      I64ExtendI32U => bin![0xad],
+      I64TruncF32S => bin![0xae],
+      I64TruncF32U => bin![0xaf],
+      I64TruncF64S => bin![0xb0],
+      I64TruncF64U => bin![0xb1],
+      F32ConvertI32S => bin![0xb2],
+      F32ConvertI32U => bin![0xb3],
+      F32ConvertI64S => bin![0xb4],
+      F32ConvertI64U => bin![0xb5],
+      F32DemoteF64 => bin![0xb6],
+      F64ConvertI32S => bin![0xb7],
+      F64ConvertI32U => bin![0xb8],
+      F64ConvertI64S => bin![0xb9],
+      F64ConvertI64U => bin![0xba],
+      F64PromoteF32 => bin![0xbb],
+      I32ReinterpretF32 => bin![0xbc],
+      I64ReinterpretF64 => bin![0xbd],
+      F32ReinterpretI32 => bin![0xbe],
+      F64ReinterpretI64 => bin![0xbf],
 
-      // I32Extend8S => {}
+      I32Extend8S => bin![0xc0],
+      I32Extend16S => bin![0xc1],
+      I64Extend8S => bin![0xc2],
+      I64Extend16S => bin![0xc3],
+      I64Extend32S => bin![0xc4],
 
-      // I32TruncSatF32S => {}
-      _ => unimplemented!(),
+      I32TruncSatF32S => bin![0xfc, 0],
+      I32TruncSatF32U => bin![0xfc, 1],
+      I32TruncSatF64S => bin![0xfc, 2],
+      I32TruncSatF64U => bin![0xfc, 3],
+      I64TruncSatF32S => bin![0xfc, 4],
+      I64TruncSatF32U => bin![0xfc, 5],
+      I64TruncSatF64S => bin![0xfc, 6],
+      I64TruncSatF64U => bin![0xfc, 7],
     };
 
     self.write(&buffer)?;

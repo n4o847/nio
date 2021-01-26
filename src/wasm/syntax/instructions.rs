@@ -161,12 +161,8 @@ pub enum Instr {
   F64ConvertI64S,
 
   I32ReinterpretF32,
-  I32ReinterpretF64,
-  I64ReinterpretF32,
   I64ReinterpretF64,
   F32ReinterpretI32,
-  F32ReinterpretI64,
-  F64ReinterpretI32,
   F64ReinterpretI64,
 
   // Parametric Instructions
