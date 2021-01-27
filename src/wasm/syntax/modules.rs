@@ -86,7 +86,7 @@ pub struct Start {
 
 pub struct Export {
   pub name: Name,
-  pub desc: (),
+  pub desc: ExportDesc,
 }
 
 pub enum ExportDesc {

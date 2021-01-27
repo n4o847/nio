@@ -1,4 +1,5 @@
 use super::super::syntax::modules::*;
+use super::super::syntax::types::*;
 use super::*;
 
 // https://webassembly.github.io/spec/core/binary/modules.html
@@ -27,8 +28,14 @@ impl Emitter<'_> {
   }
 
   // Type Section
-  fn emit_type_sec(&mut self) -> io::Result<()> {
-    Ok(())
+  fn emit_type_sec(&mut self, types: &Vec<FuncType>) -> io::Result<()> {
+    self.emit_section(1, |e| {
+      e.write_u32(types.len() as u32)?;
+      for func_type in types.iter() {
+        e.emit_func_type(func_type)?;
+      }
+      Ok(())
+    })
   }
 
   // Import Section
@@ -63,8 +70,33 @@ impl Emitter<'_> {
   }
 
   // Export Section
-  fn emit_export_sec(&mut self) -> io::Result<()> {
-    Ok(())
+  fn emit_export_sec(&mut self, exports: &Vec<Export>) -> io::Result<()> {
+    self.emit_section(7, |e| {
+      e.write_u32(exports.len() as u32)?;
+      for export in exports.iter() {
+        e.write_name(&export.name)?;
+        use ExportDesc::*;
+        match &export.desc {
+          Func(x) => {
+            e.write_u32(0x00)?;
+            e.write_u32(x.0)?;
+          }
+          Table(x) => {
+            e.write_u32(0x01)?;
+            e.write_u32(x.0)?;
+          }
+          Mem(x) => {
+            e.write_u32(0x02)?;
+            e.write_u32(x.0)?;
+          }
+          Global(x) => {
+            e.write_u32(0x03)?;
+            e.write_u32(x.0)?;
+          }
+        }
+      }
+      Ok(())
+    })
   }
 
   // Start Section
@@ -120,9 +152,19 @@ impl Emitter<'_> {
     let version = [0x01, 0x00, 0x00, 0x00];
     self.write(&version)?;
 
+    // Types Section
+    if !module.types.is_empty() {
+      self.emit_type_sec(&module.types)?;
+    }
+
     // Function Section
     if !module.funcs.is_empty() {
       self.emit_func_sec(&module.funcs)?;
+    }
+
+    // Export Section
+    if !module.exports.is_empty() {
+      self.emit_export_sec(&module.exports)?;
     }
 
     // Code Section

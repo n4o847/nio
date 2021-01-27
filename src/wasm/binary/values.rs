@@ -1,3 +1,4 @@
+use super::super::syntax::values::*;
 use super::*;
 
 // https://webassembly.github.io/spec/core/binary/values.html
@@ -50,6 +51,13 @@ impl Emitter<'_> {
 
   pub fn write_f64(&mut self, value: f64) -> io::Result<()> {
     self.write(&value.to_le_bytes())
+  }
+
+  // Names
+
+  pub fn write_name(&mut self, name: &Name) -> io::Result<()> {
+    self.write_u32(name.0.len() as u32)?;
+    self.write(name.0.as_bytes())
   }
 }
 

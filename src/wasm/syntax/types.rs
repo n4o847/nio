@@ -12,11 +12,11 @@ pub enum ValType {
 
 // Result Types
 
-pub struct ResultType(Vec<ValType>);
+pub struct ResultType(pub Vec<ValType>);
 
 // Function Types
 
-pub struct FuncType(ResultType, ResultType);
+pub struct FuncType(pub ResultType, pub ResultType);
 
 // Limits
 
