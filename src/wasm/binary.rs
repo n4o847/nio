@@ -1,9 +1,9 @@
-pub mod instructions;
-pub mod modules;
-pub mod types;
-pub mod values;
+mod instructions;
+mod modules;
+mod types;
+mod values;
 
-use super::syntax::modules::Module;
+use super::syntax::Module;
 use std::io;
 use std::io::Write;
 

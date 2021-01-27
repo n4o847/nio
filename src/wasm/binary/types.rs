@@ -1,6 +1,6 @@
 // https://webassembly.github.io/spec/core/binary/types.html
 
-use super::super::syntax::types::*;
+use super::super::syntax::*;
 use super::*;
 
 impl Emitter<'_> {

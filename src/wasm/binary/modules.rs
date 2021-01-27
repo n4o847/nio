@@ -1,5 +1,4 @@
-use super::super::syntax::modules::*;
-use super::super::syntax::types::*;
+use super::super::syntax::*;
 use super::*;
 
 // https://webassembly.github.io/spec/core/binary/modules.html

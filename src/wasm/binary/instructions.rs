@@ -1,4 +1,4 @@
-use super::super::syntax::instructions::*;
+use super::super::syntax::*;
 use super::*;
 
 // https://webassembly.github.io/spec/core/binary/instructions.html
