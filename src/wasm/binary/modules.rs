@@ -117,7 +117,7 @@ impl Emitter<'_> {
           let mut chunks = Vec::new();
           for i in 0..func.locals.len() {
             if i == 0 || func.locals[i - 1] != func.locals[i] {
-              chunks.push((0, i));
+              chunks.push((1, i));
             } else {
               chunks.last_mut().unwrap().0 += 1;
             }
