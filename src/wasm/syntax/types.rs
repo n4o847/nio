@@ -4,10 +4,10 @@
 
 #[derive(PartialEq, Eq)]
 pub enum ValType {
-  I32,
-  I64,
-  F32,
-  F64,
+    I32,
+    I64,
+    F32,
+    F64,
 }
 
 // Result Types
@@ -21,8 +21,8 @@ pub struct FuncType(pub ResultType, pub ResultType);
 // Limits
 
 pub struct Limits {
-  pub min: u32,
-  pub max: Option<u32>,
+    pub min: u32,
+    pub max: Option<u32>,
 }
 
 // Memory Types
@@ -40,15 +40,15 @@ pub struct ElemType;
 pub struct GlobalType(Mut, ValType);
 
 pub enum Mut {
-  Const,
-  Var,
+    Const,
+    Var,
 }
 
 // External Types
 
 pub enum ExternType {
-  Func(FuncType),
-  Table(TableType),
-  Mem(MemType),
-  Global(GlobalType),
+    Func(FuncType),
+    Table(TableType),
+    Mem(MemType),
+    Global(GlobalType),
 }
