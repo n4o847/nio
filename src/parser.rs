@@ -2,7 +2,12 @@ use crate::lexer::{Lexer, Token};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum AST {
-    Program { expressions: Vec<Expr> },
+    Program { statements: Vec<Stmt> },
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Stmt {
+    Expr(Expr),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -86,10 +91,9 @@ impl Parser<'_> {
     }
 
     pub fn parse_program(&mut self) -> ParseResult<AST> {
-        let mut expressions = Vec::new();
+        let mut statements = Vec::new();
         while *self.peek_token() != Token::EOF {
-            let expr = self.parse_expr(Precedence::Lowest)?;
-            self.next_token();
+            let stmt = self.parse_stmt()?;
             match self.peek_token() {
                 Token::Semicolon => {
                     self.next_token();
@@ -97,9 +101,14 @@ impl Parser<'_> {
                 Token::EOF => (),
                 _ => return Err("Expected ;"),
             }
-            expressions.push(expr);
+            statements.push(stmt);
         }
-        Ok(AST::Program { expressions })
+        Ok(AST::Program { statements })
+    }
+
+    fn parse_stmt(&mut self) -> ParseResult<Stmt> {
+        let expr = self.parse_expr(Precedence::Lowest)?;
+        Ok(Stmt::Expr(expr))
     }
 
     fn parse_expr(&mut self, precedence: Precedence) -> ParseResult<Expr> {
@@ -228,21 +237,22 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        use Expr::*;
-        use Infix::*;
-        use AST::*;
+        use self::Expr::*;
+        use self::Infix::*;
+        use self::Stmt::*;
+        use self::AST::*;
 
         assert_eq!(
             Parser::parse("123"),
             Ok(Program {
-                expressions: vec![IntLit("123".to_string())]
+                statements: vec![Expr(IntLit("123".to_string()))]
             })
         );
 
         assert_eq!(
             Parser::parse("1 + 2 * 3 * 4"),
             Ok(Program {
-                expressions: vec![BinOp {
+                statements: vec![Expr(BinOp {
                     left: Box::new(IntLit("1".to_string())),
                     infix: Add,
                     right: Box::new(BinOp {
@@ -254,35 +264,35 @@ mod tests {
                         infix: Mul,
                         right: Box::new(IntLit("4".to_string()))
                     })
-                }]
+                })]
             })
         );
 
         assert_eq!(
             Parser::parse("|x| x + 1"),
             Ok(Program {
-                expressions: vec![Lambda {
+                statements: vec![Expr(Lambda {
                     params: vec!["x".to_string()],
                     body: Box::new(BinOp {
                         left: Box::new(Ident("x".to_string())),
                         infix: Add,
                         right: Box::new(IntLit("1".to_string()))
                     })
-                }]
+                })]
             })
         );
 
         assert_eq!(
             Parser::parse("a + b(x, y)"),
             Ok(Program {
-                expressions: vec![BinOp {
+                statements: vec![Expr(BinOp {
                     left: Box::new(Ident("a".to_string())),
                     infix: Add,
                     right: Box::new(Call {
                         callee: Box::new(Ident("b".to_string())),
                         args: vec![Ident("x".to_string()), Ident("y".to_string()),]
                     })
-                }]
+                })]
             })
         );
     }
