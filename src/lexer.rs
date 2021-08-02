@@ -131,14 +131,19 @@ impl Lexer<'_> {
     }
 }
 
-#[test]
-fn test_next_token() {
-    let code = "12 + 34 * 56";
-    let mut l = Lexer::new(code);
-    assert_eq!(l.next_token(), Token::Int("12".to_string()));
-    assert_eq!(l.next_token(), Token::Add);
-    assert_eq!(l.next_token(), Token::Int("34".to_string()));
-    assert_eq!(l.next_token(), Token::Mul);
-    assert_eq!(l.next_token(), Token::Int("56".to_string()));
-    assert_eq!(l.next_token(), Token::EOF);
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_next_token() {
+        let code = "12 + 34 * 56";
+        let mut l = Lexer::new(code);
+        assert_eq!(l.next_token(), Token::Int("12".to_string()));
+        assert_eq!(l.next_token(), Token::Add);
+        assert_eq!(l.next_token(), Token::Int("34".to_string()));
+        assert_eq!(l.next_token(), Token::Mul);
+        assert_eq!(l.next_token(), Token::Int("56".to_string()));
+        assert_eq!(l.next_token(), Token::EOF);
+    }
 }
