@@ -1,45 +1,5 @@
+use crate::ast::*;
 use crate::lexer::{Lexer, Token};
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum AST {
-    Program { statements: Vec<Stmt> },
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum Stmt {
-    Expr(Expr),
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum Expr {
-    BinOp {
-        left: Box<Expr>,
-        infix: Infix,
-        right: Box<Expr>,
-    },
-    Assign {
-        left: String,
-        right: Box<Expr>,
-    },
-    Lambda {
-        params: Vec<String>,
-        body: Box<Expr>,
-    },
-    Call {
-        callee: Box<Expr>,
-        args: Vec<Expr>,
-    },
-    Ident(String),
-    IntLit(String),
-    StringLit(String),
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum Infix {
-    Add,
-    Sub,
-    Mul,
-}
 
 #[derive(PartialEq, PartialOrd)]
 enum Precedence {
@@ -85,12 +45,12 @@ impl Parser<'_> {
         Parser::token_to_precedence(&self.token)
     }
 
-    pub fn parse(input: &str) -> ParseResult<AST> {
+    pub fn parse(input: &str) -> ParseResult<Program> {
         let mut p = Self::new(input);
         p.parse_program()
     }
 
-    pub fn parse_program(&mut self) -> ParseResult<AST> {
+    pub fn parse_program(&mut self) -> ParseResult<Program> {
         let mut statements = Vec::new();
         while *self.peek_token() != Token::EOF {
             let stmt = self.parse_stmt()?;
@@ -103,7 +63,7 @@ impl Parser<'_> {
             }
             statements.push(stmt);
         }
-        Ok(AST::Program { statements })
+        Ok(Program { statements })
     }
 
     fn parse_stmt(&mut self) -> ParseResult<Stmt> {
@@ -180,18 +140,18 @@ impl Parser<'_> {
         while precedence < self.peek_precedence() {
             expr = match self.peek_token() {
                 token @ (Token::Add | Token::Sub | Token::Mul) => {
-                    let infix = match token {
-                        Token::Add => Infix::Add,
-                        Token::Sub => Infix::Sub,
-                        Token::Mul => Infix::Mul,
+                    let op = match token {
+                        Token::Add => BinOp::Add,
+                        Token::Sub => BinOp::Sub,
+                        Token::Mul => BinOp::Mul,
                         _ => unreachable!(),
                     };
                     let precedence = self.peek_precedence();
                     self.next_token();
                     let right = self.parse_expr(precedence)?;
                     Ok(Expr::BinOp {
+                        op,
                         left: Box::new(expr),
-                        infix,
                         right: Box::new(right),
                     })
                 }
@@ -237,10 +197,10 @@ mod tests {
 
     #[test]
     fn test_parse() {
+        use self::BinOp::*;
         use self::Expr::*;
-        use self::Infix::*;
+        use self::Program;
         use self::Stmt::*;
-        use self::AST::*;
 
         assert_eq!(
             Parser::parse("123"),
@@ -253,15 +213,15 @@ mod tests {
             Parser::parse("1 + 2 * 3 * 4"),
             Ok(Program {
                 statements: vec![Expr(BinOp {
+                    op: Add,
                     left: Box::new(IntLit("1".to_string())),
-                    infix: Add,
                     right: Box::new(BinOp {
+                        op: Mul,
                         left: Box::new(BinOp {
+                            op: Mul,
                             left: Box::new(IntLit("2".to_string())),
-                            infix: Mul,
                             right: Box::new(IntLit("3".to_string()))
                         }),
-                        infix: Mul,
                         right: Box::new(IntLit("4".to_string()))
                     })
                 })]
@@ -274,8 +234,8 @@ mod tests {
                 statements: vec![Expr(Lambda {
                     params: vec!["x".to_string()],
                     body: Box::new(BinOp {
+                        op: Add,
                         left: Box::new(Ident("x".to_string())),
-                        infix: Add,
                         right: Box::new(IntLit("1".to_string()))
                     })
                 })]
@@ -286,8 +246,8 @@ mod tests {
             Parser::parse("a + b(x, y)"),
             Ok(Program {
                 statements: vec![Expr(BinOp {
+                    op: Add,
                     left: Box::new(Ident("a".to_string())),
-                    infix: Add,
                     right: Box::new(Call {
                         callee: Box::new(Ident("b".to_string())),
                         args: vec![Ident("x".to_string()), Ident("y".to_string()),]
