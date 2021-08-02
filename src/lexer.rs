@@ -45,16 +45,21 @@ impl Lexer<'_> {
         self.skip_whitespace();
         if let Some((pos, ch)) = self.read_char() {
             match ch {
-                'a'..='z' => {
-                    while let Some(&(pos_end, ch)) = self.peek_char() {
-                        match ch {
-                            'a'..='z' | '0'..='9' => {
-                                self.read_char();
+                'a'..='z' | 'A'..='Z' | '_' => {
+                    let ident = (|| {
+                        while let Some(&(pos_end, ch)) = self.peek_char() {
+                            match ch {
+                                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
+                                    self.read_char();
+                                }
+                                _ => {
+                                    return &self.input[pos..pos_end];
+                                }
                             }
-                            _ => return Token::Ident(self.input[pos..pos_end].to_string()),
                         }
-                    }
-                    return Token::Ident((&self.input[pos..]).to_string());
+                        return &self.input[pos..];
+                    })();
+                    return Token::Ident(ident.to_string());
                 }
                 '1'..='9' => {
                     while let Some(&(pos_end, ch)) = self.peek_char() {
