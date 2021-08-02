@@ -1,4 +1,3 @@
-use nio::repl::Repl;
 use std::env;
 use std::process;
 
@@ -10,7 +9,7 @@ fn main() {
             process::exit(1);
         }
         None => {
-            Repl::new().start().unwrap();
+            process::exit(0);
         }
     }
 }
