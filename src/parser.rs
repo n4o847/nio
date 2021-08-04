@@ -33,10 +33,10 @@ impl Parser<'_> {
 
     fn token_to_precedence(token: &Token) -> Precedence {
         match token {
-            Token::Add => Precedence::Sum,
-            Token::Sub => Precedence::Sum,
-            Token::Mul => Precedence::Product,
-            Token::Lparen => Precedence::Call,
+            Token::Plus => Precedence::Sum,
+            Token::Minus => Precedence::Sum,
+            Token::Star => Precedence::Product,
+            Token::LParen => Precedence::Call,
             _ => Precedence::Lowest,
         }
     }
@@ -52,13 +52,13 @@ impl Parser<'_> {
 
     pub fn parse_program(&mut self) -> ParseResult<Program> {
         let mut statements = Vec::new();
-        while *self.peek_token() != Token::EOF {
+        while *self.peek_token() != Token::Eof {
             let stmt = self.parse_stmt()?;
             match self.peek_token() {
-                Token::Semicolon => {
+                Token::Semi => {
                     self.next_token();
                 }
-                Token::EOF => (),
+                Token::Eof => (),
                 _ => return Err("Expected ;"),
             }
             statements.push(stmt);
@@ -77,7 +77,7 @@ impl Parser<'_> {
                 let name = name.clone();
                 self.next_token();
                 match self.peek_token() {
-                    Token::Assign => {
+                    Token::Eq => {
                         self.next_token();
                         let right = self.parse_expr(Precedence::Lowest)?;
                         Ok(Expr::Assign {
@@ -98,16 +98,16 @@ impl Parser<'_> {
                 self.next_token();
                 Ok(Expr::StringLit(raw))
             }
-            Token::Lparen => {
+            Token::LParen => {
                 self.next_token();
                 let expr = self.parse_expr(Precedence::Lowest)?;
                 match self.peek_token() {
-                    Token::Rparen => self.next_token(),
+                    Token::RParen => self.next_token(),
                     _ => return Err("Expected )"),
                 }
                 Ok(expr)
             }
-            Token::Vbar => {
+            Token::Or => {
                 self.next_token();
                 let mut params = Vec::new();
                 if let Token::Ident(name) = self.peek_token() {
@@ -126,7 +126,7 @@ impl Parser<'_> {
                     }
                 }
                 match self.peek_token() {
-                    Token::Vbar => self.next_token(),
+                    Token::Or => self.next_token(),
                     _ => return Err("Expected |"),
                 }
                 let body = self.parse_expr(Precedence::Lowest)?;
@@ -139,11 +139,11 @@ impl Parser<'_> {
         }?;
         while precedence < self.peek_precedence() {
             expr = match self.peek_token() {
-                token @ (Token::Add | Token::Sub | Token::Mul) => {
+                token @ (Token::Plus | Token::Minus | Token::Star) => {
                     let op = match token {
-                        Token::Add => BinOp::Add,
-                        Token::Sub => BinOp::Sub,
-                        Token::Mul => BinOp::Mul,
+                        Token::Plus => BinOp::Add,
+                        Token::Minus => BinOp::Sub,
+                        Token::Star => BinOp::Mul,
                         _ => unreachable!(),
                     };
                     let precedence = self.peek_precedence();
@@ -155,10 +155,10 @@ impl Parser<'_> {
                         right: Box::new(right),
                     })
                 }
-                Token::Lparen => {
+                Token::LParen => {
                     self.next_token();
                     match self.peek_token() {
-                        Token::Rparen => {
+                        Token::RParen => {
                             self.next_token();
                             Ok(Expr::Call {
                                 callee: Box::new(expr),
@@ -172,7 +172,7 @@ impl Parser<'_> {
                                 self.next_token();
                                 args.push(self.parse_expr(Precedence::Lowest)?);
                             }
-                            if *self.peek_token() == Token::Rparen {
+                            if *self.peek_token() == Token::RParen {
                                 self.next_token();
                                 Ok(Expr::Call {
                                     callee: Box::new(expr),
