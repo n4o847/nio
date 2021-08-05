@@ -16,6 +16,7 @@ pub enum Token {
     RParen, // )
     Comma,  // ,
     Semi,   // ;
+    Nl,     // newline
     Eof,    // end-of-file
     Unexpected(char),
 }
@@ -112,6 +113,7 @@ impl Lexer<'_> {
                 ')' => Token::RParen,
                 ',' => Token::Comma,
                 ';' => Token::Semi,
+                '\n' => Token::Nl,
                 _ => Token::Unexpected(ch),
             }
         } else {

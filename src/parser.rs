@@ -52,23 +52,32 @@ impl Parser<'_> {
 
     pub fn parse_program(&mut self) -> ParseResult<Program> {
         let mut statements = Vec::new();
-        while *self.peek_token() != Token::Eof {
-            let stmt = self.parse_stmt()?;
+        loop {
             match self.peek_token() {
-                Token::Semi => {
+                Token::Nl => {
                     self.next_token();
                 }
-                Token::Eof => (),
-                _ => return Err("Expected ;"),
+                Token::Eof => {
+                    break;
+                }
+                _ => {
+                    let stmt = self.parse_stmt()?;
+                    statements.push(stmt);
+                }
             }
-            statements.push(stmt);
         }
         Ok(Program { statements })
     }
 
     fn parse_stmt(&mut self) -> ParseResult<Stmt> {
         let expr = self.parse_expr(Precedence::Lowest)?;
-        Ok(Stmt::Expr(expr))
+        match self.peek_token() {
+            Token::Semi | Token::Nl => {
+                self.next_token();
+                Ok(Stmt::Expr(expr))
+            }
+            _ => Err("Expected ; or newline"),
+        }
     }
 
     fn parse_expr(&mut self, precedence: Precedence) -> ParseResult<Expr> {
