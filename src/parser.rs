@@ -74,10 +74,13 @@ impl Parser<'_> {
         match self.peek_token() {
             Token::Semi | Token::Nl => {
                 self.next_token();
-                Ok(Stmt::Expr(expr))
             }
-            _ => Err("Expected ; or newline"),
+            Token::Eof => {}
+            _ => {
+                return Err("Expected ; or newline");
+            }
         }
+        Ok(Stmt::Expr(expr))
     }
 
     fn parse_expr(&mut self, precedence: Precedence) -> ParseResult<Expr> {
