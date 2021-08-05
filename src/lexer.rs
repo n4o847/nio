@@ -5,20 +5,37 @@ pub enum Token {
     Ident(String),
     Int(String),
     String(String),
-    Plus,   // +
-    Minus,  // -
-    Star,   // *
-    Eq,     // =
-    Or,     // |
-    RArrow, // ->
-    LParen, // (
-    RParen, // )
-    Comma,  // ,
-    Semi,   // ;
-    Nl,     // newline
-    Eof,    // end-of-file
-    KwDef,  // def
-    KwLet,  // let
+    Plus,     // +
+    Minus,    // -
+    Star,     // *
+    Slash,    // /
+    Percent,  // %
+    Caret,    // ^
+    Not,      // !
+    And,      // &
+    Or,       // |
+    Eq,       // =
+    EqEq,     // ==
+    Gt,       // >
+    Lt,       // <
+    Ge,       // >=
+    Le,       // <=
+    RArrow,   // ->
+    FatArrow, // =>
+    LParen,   // (
+    RParen,   // )
+    LBrace,   // [
+    RBrace,   // ]
+    LBracket, // {
+    RBracket, // }
+    Dot,      // .
+    Comma,    // ,
+    Semi,     // ;
+    Colon,    // :
+    Nl,       // newline
+    Eof,      // end-of-file
+    KwDef,    // def
+    KwLet,    // let
     Unexpected(char),
 }
 
@@ -128,13 +145,63 @@ impl Lexer<'_> {
                 self.next_char();
                 Token::Star
             }
-            Some('=') => {
+            Some('/') => {
                 self.next_char();
-                Token::Eq
+                Token::Slash
+            }
+            Some('%') => {
+                self.next_char();
+                Token::Percent
+            }
+            Some('^') => {
+                self.next_char();
+                Token::Caret
+            }
+            Some('!') => {
+                self.next_char();
+                Token::Not
+            }
+            Some('&') => {
+                self.next_char();
+                Token::And
             }
             Some('|') => {
                 self.next_char();
                 Token::Or
+            }
+            Some('=') => {
+                self.next_char();
+                match self.peek_char() {
+                    Some('=') => {
+                        self.next_char();
+                        Token::EqEq
+                    }
+                    Some('>') => {
+                        self.next_char();
+                        Token::FatArrow
+                    }
+                    _ => Token::Eq,
+                }
+            }
+            Some('>') => {
+                self.next_char();
+                match self.peek_char() {
+                    Some('=') => {
+                        self.next_char();
+                        Token::Ge
+                    }
+                    _ => Token::Gt,
+                }
+            }
+            Some('<') => {
+                self.next_char();
+                match self.peek_char() {
+                    Some('=') => {
+                        self.next_char();
+                        Token::Le
+                    }
+                    _ => Token::Lt,
+                }
             }
             Some('(') => {
                 self.next_char();
@@ -144,6 +211,26 @@ impl Lexer<'_> {
                 self.next_char();
                 Token::RParen
             }
+            Some('{') => {
+                self.next_char();
+                Token::LBrace
+            }
+            Some('}') => {
+                self.next_char();
+                Token::RBrace
+            }
+            Some('[') => {
+                self.next_char();
+                Token::LBracket
+            }
+            Some(']') => {
+                self.next_char();
+                Token::RBracket
+            }
+            Some('.') => {
+                self.next_char();
+                Token::Dot
+            }
             Some(',') => {
                 self.next_char();
                 Token::Comma
@@ -151,6 +238,10 @@ impl Lexer<'_> {
             Some(';') => {
                 self.next_char();
                 Token::Semi
+            }
+            Some(':') => {
+                self.next_char();
+                Token::Colon
             }
             Some('\n') => {
                 self.next_char();
