@@ -62,7 +62,7 @@ impl Lexer<'_> {
         self.chars.clone().next()
     }
 
-    fn offset(&self) -> usize {
+    pub fn offset(&self) -> usize {
         self.input.len() - self.chars.as_str().len()
     }
 

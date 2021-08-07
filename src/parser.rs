@@ -45,9 +45,10 @@ impl Parser<'_> {
         Parser::token_to_precedence(&self.token)
     }
 
-    pub fn parse(input: &str) -> ParseResult<Program> {
+    pub fn parse(input: &str) -> Result<Program, String> {
         let mut p = Self::new(input);
         p.parse_program()
+            .map_err(|err| format!("{}, found {:?} (at {})", err, p.token, p.lexer.offset()))
     }
 
     pub fn parse_program(&mut self) -> ParseResult<Program> {
