@@ -70,7 +70,94 @@ impl Parser<'_> {
     }
 
     fn parse_stmt(&mut self) -> ParseResult<Stmt> {
-        let expr = self.parse_expr(Precedence::Lowest)?;
+        let stmt = match self.peek_token() {
+            Token::KwDef => {
+                self.next_token();
+                let name = self.parse_ident()?;
+                match self.peek_token() {
+                    Token::LParen => {
+                        self.next_token();
+                        Ok(())
+                    }
+                    _ => Err("Expected ("),
+                }?;
+                let mut params = vec![];
+                loop {
+                    let param_name = match self.peek_token() {
+                        Token::Ident(param_name) => {
+                            let param_name = param_name.clone();
+                            self.next_token();
+                            param_name
+                        }
+                        Token::RParen => {
+                            self.next_token();
+                            break;
+                        }
+                        _ => return Err("Expected Ident or )"),
+                    };
+                    match self.peek_token() {
+                        Token::Colon => {
+                            self.next_token();
+                        }
+                        _ => return Err("Expected :"),
+                    }
+                    let param_type = match self.peek_token() {
+                        Token::Ident(param_type) => {
+                            let param_type = param_type.clone();
+                            self.next_token();
+                            param_type
+                        }
+                        _ => return Err("Expected Ident"),
+                    };
+                    params.push((param_name, param_type));
+                    match self.peek_token() {
+                        Token::Comma => {
+                            self.next_token();
+                        }
+                        Token::RParen => {
+                            self.next_token();
+                            break;
+                        }
+                        _ => return Err("Expected , or )"),
+                    }
+                }
+                match self.peek_token() {
+                    Token::Colon => {
+                        self.next_token();
+                    }
+                    _ => return Err("Expected :"),
+                }
+                let return_type = match self.peek_token() {
+                    Token::Ident(return_type) => {
+                        let return_type = return_type.clone();
+                        self.next_token();
+                        return_type
+                    }
+                    _ => return Err("Expected Ident"),
+                };
+                match self.peek_token() {
+                    Token::Eq => {
+                        self.next_token();
+                    }
+                    _ => return Err("Expected ="),
+                }
+                let body = self.parse_expr(Precedence::Lowest)?;
+                Stmt::Def {
+                    name,
+                    params,
+                    return_type,
+                    body: Box::new(body),
+                }
+            }
+            Token::KwLet => {
+                self.next_token();
+                todo!();
+            }
+            _ => {
+                let expr = self.parse_expr(Precedence::Lowest)?;
+                Stmt::Expr(expr)
+            }
+        };
         match self.peek_token() {
             Token::Semi | Token::Nl => {
                 self.next_token();
@@ -80,7 +167,7 @@ impl Parser<'_> {
                 return Err("Expected ; or newline");
             }
         }
-        Ok(Stmt::Expr(expr))
+        Ok(stmt)
     }
 
     fn parse_expr(&mut self, precedence: Precedence) -> ParseResult<Expr> {
@@ -200,6 +287,17 @@ impl Parser<'_> {
             }?;
         }
         Ok(expr)
+    }
+
+    fn parse_ident(&mut self) -> ParseResult<String> {
+        match self.peek_token() {
+            Token::Ident(name) => {
+                let name = name.clone();
+                self.next_token();
+                Ok(name)
+            }
+            _ => Err("Expected Ident"),
+        }
     }
 }
 
