@@ -5,13 +5,13 @@ pub struct Program {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Stmt {
-    Expr(Expr),
     Def {
         name: String,
         params: Vec<(String, String)>,
         return_type: String,
         body: Box<Expr>,
     },
+    Expr(Expr),
 }
 
 #[derive(Debug, PartialEq, Clone)]
