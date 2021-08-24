@@ -1,144 +1,287 @@
-use std::iter::Peekable;
-use std::str::CharIndices;
+use std::str::Chars;
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Ident(String),
     Int(String),
     String(String),
-    Add,
-    Sub,
-    Mul,
-    Assign,
-    Vbar,
-    Rarrow,
-    Lparen,
-    Rparen,
-    Comma,
-    Semicolon,
-    EOF,
+    Plus,     // +
+    Minus,    // -
+    Star,     // *
+    Slash,    // /
+    Percent,  // %
+    Caret,    // ^
+    Not,      // !
+    And,      // &
+    Or,       // |
+    Eq,       // =
+    EqEq,     // ==
+    Gt,       // >
+    Lt,       // <
+    Ge,       // >=
+    Le,       // <=
+    RArrow,   // ->
+    FatArrow, // =>
+    LParen,   // (
+    RParen,   // )
+    LBrace,   // [
+    RBrace,   // ]
+    LBracket, // {
+    RBracket, // }
+    Dot,      // .
+    Comma,    // ,
+    Semi,     // ;
+    Colon,    // :
+    Nl,       // newline
+    Eof,      // end-of-file
+    KwDef,    // def
+    KwLet,    // let
     Unexpected(char),
 }
 
 pub struct Lexer<'a> {
     input: &'a str,
-    char_indices: Peekable<CharIndices<'a>>,
+    chars: Chars<'a>,
 }
 
 impl Lexer<'_> {
     pub fn new(input: &str) -> Lexer {
         Lexer {
             input,
-            char_indices: input.char_indices().peekable(),
+            chars: input.chars(),
         }
     }
 
-    fn read_char(&mut self) -> Option<(usize, char)> {
-        self.char_indices.next()
+    fn next_char(&mut self) {
+        self.chars.next();
     }
 
-    fn peek_char(&mut self) -> Option<&(usize, char)> {
-        self.char_indices.peek()
+    fn peek_char(&self) -> Option<char> {
+        // Instead of `Peekable<CharIndices>`, I'm using `Char` directly and cloning it when I need to "peek".
+        // See https://users.rust-lang.org/t/takewhile-iterator-over-chars-to-string-slice/11014
+        self.chars.clone().next()
+    }
+
+    pub fn offset(&self) -> usize {
+        self.input.len() - self.chars.as_str().len()
     }
 
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
-        if let Some((pos, ch)) = self.read_char() {
-            match ch {
-                'a'..='z' | 'A'..='Z' | '_' => {
-                    let ident = (|| {
-                        while let Some(&(pos_end, ch)) = self.peek_char() {
-                            match ch {
-                                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
-                                    self.read_char();
-                                }
-                                _ => {
-                                    return &self.input[pos..pos_end];
-                                }
-                            }
+        match self.peek_char() {
+            Some('a'..='z' | 'A'..='Z' | '_') => {
+                let start = self.offset();
+                self.next_char();
+                loop {
+                    match self.peek_char() {
+                        Some('a'..='z' | 'A'..='Z' | '0'..='9' | '_') => {
+                            self.next_char();
                         }
-                        return &self.input[pos..];
-                    })();
-                    return Token::Ident(ident.to_string());
-                }
-                '1'..='9' => {
-                    while let Some(&(pos_end, ch)) = self.peek_char() {
-                        match ch {
-                            '0'..='9' => {
-                                self.read_char();
-                            }
-                            _ => return Token::Int(self.input[pos..pos_end].to_string()),
+                        _ => {
+                            break;
                         }
                     }
-                    return Token::Int((&self.input[pos..]).to_string());
                 }
-                '"' => {
-                    while let Some(&(pos_end, ch)) = self.peek_char() {
-                        match ch {
-                            '\\' => {
-                                return Token::Unexpected('\\');
-                            }
-                            '"' => {
-                                self.read_char();
-                                return Token::String(
-                                    self.input[pos..pos_end + ch.len_utf8()].to_string(),
-                                );
-                            }
-                            _ => {
-                                self.read_char();
-                            }
-                        }
-                    }
-                    return Token::Unexpected('"');
+                let end = self.offset();
+                match &self.input[start..end] {
+                    "def" => Token::KwDef,
+                    "let" => Token::KwLet,
+                    ident => Token::Ident(ident.to_string()),
                 }
-                '+' => Token::Add,
-                '-' => {
-                    if let Some(&(_, ch)) = self.peek_char() {
-                        match ch {
-                            '>' => {
-                                self.read_char();
-                                Token::Rarrow
-                            }
-                            _ => Token::Sub,
-                        }
-                    } else {
-                        Token::Sub
-                    }
-                }
-                '*' => Token::Mul,
-                '=' => Token::Assign,
-                '|' => Token::Vbar,
-                '(' => Token::Lparen,
-                ')' => Token::Rparen,
-                ',' => Token::Comma,
-                ';' => Token::Semicolon,
-                _ => Token::Unexpected(ch),
             }
-        } else {
-            Token::EOF
+            Some('1'..='9') => {
+                let start = self.offset();
+                self.next_char();
+                loop {
+                    match self.peek_char() {
+                        Some('0'..='9') => {
+                            self.next_char();
+                        }
+                        _ => {
+                            break;
+                        }
+                    }
+                }
+                let end = self.offset();
+                return Token::Int((&self.input[start..end]).to_string());
+            }
+            Some('"') => {
+                let start = self.offset();
+                self.next_char();
+                loop {
+                    match self.peek_char() {
+                        Some('\\') => {
+                            break Token::Unexpected('\\');
+                        }
+                        Some('"') => {
+                            self.next_char();
+                            let end = self.offset();
+                            break Token::String(self.input[start..end].to_string());
+                        }
+                        Some(_) => {
+                            self.next_char();
+                        }
+                        None => {
+                            break Token::Unexpected('"');
+                        }
+                    }
+                }
+            }
+            Some('+') => {
+                self.next_char();
+                Token::Plus
+            }
+            Some('-') => {
+                self.next_char();
+                match self.peek_char() {
+                    Some('>') => {
+                        self.next_char();
+                        Token::RArrow
+                    }
+                    _ => Token::Minus,
+                }
+            }
+            Some('*') => {
+                self.next_char();
+                Token::Star
+            }
+            Some('/') => {
+                self.next_char();
+                Token::Slash
+            }
+            Some('%') => {
+                self.next_char();
+                Token::Percent
+            }
+            Some('^') => {
+                self.next_char();
+                Token::Caret
+            }
+            Some('!') => {
+                self.next_char();
+                Token::Not
+            }
+            Some('&') => {
+                self.next_char();
+                Token::And
+            }
+            Some('|') => {
+                self.next_char();
+                Token::Or
+            }
+            Some('=') => {
+                self.next_char();
+                match self.peek_char() {
+                    Some('=') => {
+                        self.next_char();
+                        Token::EqEq
+                    }
+                    Some('>') => {
+                        self.next_char();
+                        Token::FatArrow
+                    }
+                    _ => Token::Eq,
+                }
+            }
+            Some('>') => {
+                self.next_char();
+                match self.peek_char() {
+                    Some('=') => {
+                        self.next_char();
+                        Token::Ge
+                    }
+                    _ => Token::Gt,
+                }
+            }
+            Some('<') => {
+                self.next_char();
+                match self.peek_char() {
+                    Some('=') => {
+                        self.next_char();
+                        Token::Le
+                    }
+                    _ => Token::Lt,
+                }
+            }
+            Some('(') => {
+                self.next_char();
+                Token::LParen
+            }
+            Some(')') => {
+                self.next_char();
+                Token::RParen
+            }
+            Some('{') => {
+                self.next_char();
+                Token::LBrace
+            }
+            Some('}') => {
+                self.next_char();
+                Token::RBrace
+            }
+            Some('[') => {
+                self.next_char();
+                Token::LBracket
+            }
+            Some(']') => {
+                self.next_char();
+                Token::RBracket
+            }
+            Some('.') => {
+                self.next_char();
+                Token::Dot
+            }
+            Some(',') => {
+                self.next_char();
+                Token::Comma
+            }
+            Some(';') => {
+                self.next_char();
+                Token::Semi
+            }
+            Some(':') => {
+                self.next_char();
+                Token::Colon
+            }
+            Some('\n') => {
+                self.next_char();
+                Token::Nl
+            }
+            Some(ch) => {
+                self.next_char();
+                Token::Unexpected(ch)
+            }
+            None => Token::Eof,
         }
     }
 
     fn skip_whitespace(&mut self) {
-        while let Some(&(_pos, ch)) = self.peek_char() {
-            match ch {
-                '\t' | ' ' => {
-                    self.read_char();
+        loop {
+            match self.peek_char() {
+                Some('\t' | ' ') => {
+                    self.next_char();
                 }
-                _ => return,
+                _ => {
+                    break;
+                }
             }
         }
     }
 }
 
-#[test]
-fn test_next_token() {
-    let code = "12 + 34 * 56";
-    let mut l = Lexer::new(code);
-    assert_eq!(l.next_token(), Token::Int("12".to_string()));
-    assert_eq!(l.next_token(), Token::Add);
-    assert_eq!(l.next_token(), Token::Int("34".to_string()));
-    assert_eq!(l.next_token(), Token::Mul);
-    assert_eq!(l.next_token(), Token::Int("56".to_string()));
-    assert_eq!(l.next_token(), Token::EOF);
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_next_token() {
+        let code = "12 + 34 * 56";
+        let mut l = Lexer::new(code);
+        assert_eq!(l.next_token(), Token::Int("12".to_string()));
+        assert_eq!(l.next_token(), Token::Plus);
+        assert_eq!(l.next_token(), Token::Int("34".to_string()));
+        assert_eq!(l.next_token(), Token::Star);
+        assert_eq!(l.next_token(), Token::Int("56".to_string()));
+        assert_eq!(l.next_token(), Token::Eof);
+    }
 }
