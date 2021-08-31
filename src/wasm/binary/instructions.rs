@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+
 use super::super::syntax::*;
 use super::*;
 
