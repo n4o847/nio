@@ -7,11 +7,10 @@ pub mod lexer;
 
 use lalrpop_util::ParseError;
 
-type Location = ();
+pub type Location = ();
+pub type Error = &'static str;
 
-pub fn parse(
-    input: &str,
-) -> Result<ast::Program, ParseError<Location, lexer::Token, &'static str>> {
+pub fn parse(input: &str) -> Result<ast::Program, ParseError<Location, lexer::Token, Error>> {
     let lexer = lexer::Lexer::new(input);
     grammar::ProgramParser::new().parse(input, lexer)
 }

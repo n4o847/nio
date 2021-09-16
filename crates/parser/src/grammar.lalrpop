@@ -1,5 +1,6 @@
 use crate::ast::*;
 use crate::lexer::Token;
+use crate::{Error, Location};
 
 grammar<'a>(input: &'a str);
 
@@ -63,8 +64,8 @@ List<T>: Vec<T> = {
 };
 
 extern {
-    type Location = ();
-    type Error = &'static str;
+    type Location = Location;
+    type Error = Error;
 
     enum Token<'a> {
         "IDENT" => Token::Ident(<&'a str>),
