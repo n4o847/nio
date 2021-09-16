@@ -1,6 +1,7 @@
 use crate::ast::*;
+use crate::lexer::Token;
 
-grammar;
+grammar<'a>(input: &'a str);
 
 pub Program: Program = {
     <statements: Stmt*> => Program { statements },
@@ -46,11 +47,11 @@ MulOp: BinOp = {
 
 pub Term: Expr = {
     <name: Name> => Expr::Ident(name),
-    r"[1-9][0-9]*" => Expr::IntLit(<>.to_string()),
+    "INT" => Expr::IntLit(<>.to_string()),
     "(" <expr: Expr> ")" => expr,
 };
 
-Name: String = r"(?i)[a-z_][a-z0-9_]*" => <>.to_string();
+Name: String = "IDENT" => <>.to_string();
 
 #[inline]
 List<T>: Vec<T> = {
@@ -60,3 +61,44 @@ List<T>: Vec<T> = {
         items
     },
 };
+
+extern {
+    type Location = ();
+    type Error = &'static str;
+
+    enum Token<'a> {
+        "IDENT" => Token::Ident(<&'a str>),
+        "INT" => Token::Int(<&'a str>),
+        "STRING" => Token::String(<&'a str>),
+        "+" => Token::Plus,
+        "-" => Token::Minus,
+        "*" => Token::Star,
+        "/" => Token::Slash,
+        "%" => Token::Percent,
+        "^" => Token::Caret,
+        "!" => Token::Not,
+        "&" => Token::And,
+        "|" => Token::Or,
+        "=" => Token::Eq,
+        "==" => Token::EqEq,
+        ">" => Token::Gt,
+        "<" => Token::Lt,
+        ">=" => Token::Ge,
+        "<=" => Token::Le,
+        "->" => Token::RArrow,
+        "=>" => Token::FatArrow,
+        "(" => Token::LParen,
+        ")" => Token::RParen,
+        "[" => Token::LBrace,
+        "]" => Token::RBrace,
+        "{" => Token::LBracket,
+        "}" => Token::RBracket,
+        "." => Token::Dot,
+        "," => Token::Comma,
+        ";" => Token::Semi,
+        ":" => Token::Colon,
+        "NEWLINE" => Token::Nl,
+        "def" => Token::KwDef,
+        "let" => Token::KwLet,
+    }
+}

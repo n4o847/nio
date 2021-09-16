@@ -3,11 +3,17 @@ extern crate lalrpop_util;
 
 pub mod ast;
 lalrpop_mod!(pub grammar);
+pub mod lexer;
 
-use lalrpop_util::{lexer::Token, ParseError};
+use lalrpop_util::ParseError;
 
-pub fn parse(input: &str) -> Result<ast::Program, ParseError<usize, Token, &str>> {
-    grammar::ProgramParser::new().parse(input)
+type Location = ();
+
+pub fn parse(
+    input: &str,
+) -> Result<ast::Program, ParseError<Location, lexer::Token, &'static str>> {
+    let lexer = lexer::Lexer::new(input);
+    grammar::ProgramParser::new().parse(input, lexer)
 }
 
 #[cfg(test)]
