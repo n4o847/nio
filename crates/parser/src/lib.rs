@@ -52,19 +52,19 @@ mod tests {
             })
         );
 
-        // assert_eq!(
-        //     parse("|x| x + 1"),
-        //     Ok(Program {
-        //         statements: vec![Expr(Lambda {
-        //             params: vec!["x".to_string()],
-        //             body: Box::new(BinOp {
-        //                 op: Add,
-        //                 left: Box::new(Ident("x".to_string())),
-        //                 right: Box::new(IntLit("1".to_string()))
-        //             })
-        //         })]
-        //     })
-        // );
+        assert_eq!(
+            parse("|x| x + 1"),
+            Ok(Program {
+                statements: vec![Expr(Lambda {
+                    params: vec!["x".to_string()],
+                    body: Box::new(BinOp {
+                        op: Add,
+                        left: Box::new(Ident("x".to_string())),
+                        right: Box::new(IntLit("1".to_string()))
+                    })
+                })]
+            })
+        );
 
         assert_eq!(
             parse("a + b(x, y)"),

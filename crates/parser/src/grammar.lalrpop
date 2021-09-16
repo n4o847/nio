@@ -23,7 +23,10 @@ Param: (String, String) = {
     <Name> ":" <Name> => (<>),
 };
 
-pub Expr: Expr = AddExpr;
+pub Expr: Expr = {
+    AddExpr,
+    LambdaExpr,
+};
 
 AddExpr: Expr = {
     <left: AddExpr> <op: AddOp> <right: MulExpr> =>
@@ -50,6 +53,11 @@ CallExpr: Expr = {
     <callee: CallExpr> "(" <args: List<Expr>> ")" =>
         Expr::Call { callee: Box::new(callee), args },
     Term,
+};
+
+LambdaExpr: Expr = {
+    "|" <params: List<Name>> "|" <body: Expr> =>
+        Expr::Lambda { params, body: Box::new(body) },
 };
 
 pub Term: Expr = {
