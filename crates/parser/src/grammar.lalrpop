@@ -5,7 +5,7 @@ use crate::{Error, Location};
 grammar<'a>(input: &'a str);
 
 pub Program: Program = {
-    <statements: Stmt*> => Program { statements },
+    <statements: SepBy<Stmt, "NEWLINE">> => Program { statements },
 };
 
 pub Stmt: Stmt = {
@@ -37,13 +37,19 @@ AddOp: BinOp = {
 };
 
 MulExpr: Expr = {
-    <left: MulExpr> <op: MulOp> <right: Term> =>
+    <left: MulExpr> <op: MulOp> <right: CallExpr> =>
         Expr::BinOp { op, left: Box::new(left), right: Box::new(right) },
-    Term,
+    CallExpr,
 };
 
 MulOp: BinOp = {
     "*" => BinOp::Mul,
+};
+
+CallExpr: Expr = {
+    <callee: CallExpr> "(" <args: List<Expr>> ")" =>
+        Expr::Call { callee: Box::new(callee), args },
+    Term,
 };
 
 pub Term: Expr = {
@@ -57,6 +63,15 @@ Name: String = "IDENT" => <>.to_string();
 #[inline]
 List<T>: Vec<T> = {
     <items: (<T> ",")*> <last: T?> => {
+        let mut items = items;
+        items.extend(last);
+        items
+    },
+};
+
+#[inline]
+SepBy<T, U>: Vec<T> = {
+    <items: (<T> U)*> <last: T?> => {
         let mut items = items;
         items.extend(last);
         items

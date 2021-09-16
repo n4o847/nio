@@ -66,18 +66,18 @@ mod tests {
         //     })
         // );
 
-        // assert_eq!(
-        //     parse("a + b(x, y)"),
-        //     Ok(Program {
-        //         statements: vec![Expr(BinOp {
-        //             op: Add,
-        //             left: Box::new(Ident("a".to_string())),
-        //             right: Box::new(Call {
-        //                 callee: Box::new(Ident("b".to_string())),
-        //                 args: vec![Ident("x".to_string()), Ident("y".to_string()),]
-        //             })
-        //         })]
-        //     })
-        // );
+        assert_eq!(
+            parse("a + b(x, y)"),
+            Ok(Program {
+                statements: vec![Expr(BinOp {
+                    op: Add,
+                    left: Box::new(Ident("a".to_string())),
+                    right: Box::new(Call {
+                        callee: Box::new(Ident("b".to_string())),
+                        args: vec![Ident("x".to_string()), Ident("y".to_string()),]
+                    })
+                })]
+            })
+        );
     }
 }
