@@ -1,0 +1,62 @@
+use crate::ast::*;
+
+grammar;
+
+pub Program: Program = {
+    <statements: Stmt*> => Program { statements },
+}
+
+pub Stmt: Stmt = {
+    "def" <name: Name> "(" <params: List<Param>> ")" ":" <return_type: Name> "=" <body: Expr> =>
+        Stmt::Def {
+            name,
+            params,
+            return_type,
+            body: Box::new(body),
+        },
+    Expr => Stmt::Expr(<>),
+};
+
+Param: (String, String) = {
+    <Name> ":" <Name> => (<>),
+};
+
+pub Expr: Expr = AddExpr;
+
+AddExpr: Expr = {
+    <left: AddExpr> <op: AddOp> <right: MulExpr> =>
+        Expr::BinOp { op, left: Box::new(left), right: Box::new(right) },
+    MulExpr,
+};
+
+AddOp: BinOp = {
+    "+" => BinOp::Add,
+    "-" => BinOp::Sub,
+};
+
+MulExpr: Expr = {
+    <left: MulExpr> <op: MulOp> <right: Term> =>
+        Expr::BinOp { op, left: Box::new(left), right: Box::new(right) },
+    Term,
+};
+
+MulOp: BinOp = {
+    "*" => BinOp::Mul,
+};
+
+pub Term: Expr = {
+    <name: Name> => Expr::Ident(name),
+    r"[1-9][0-9]*" => Expr::IntLit(<>.to_string()),
+    "(" <expr: Expr> ")" => expr,
+};
+
+Name: String = r"(?i)[a-z_][a-z0-9_]*" => <>.to_string();
+
+#[inline]
+List<T>: Vec<T> = {
+    <items: (<T> ",")*> <last: T?> => {
+        let mut items = items;
+        items.extend(last);
+        items
+    },
+};
