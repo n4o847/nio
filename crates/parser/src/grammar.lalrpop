@@ -4,7 +4,7 @@ grammar;
 
 pub Program: Program = {
     <statements: Stmt*> => Program { statements },
-}
+};
 
 pub Stmt: Stmt = {
     "def" <name: Name> "(" <params: List<Param>> ")" ":" <return_type: Name> "=" <body: Expr> =>
