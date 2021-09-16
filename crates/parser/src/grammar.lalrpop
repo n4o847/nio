@@ -5,11 +5,11 @@ use crate::{Error, Location};
 grammar<'a>(input: &'a str);
 
 pub Program: Program = {
-    <statements: SepBy<Stmt, "NEWLINE">> => Program { statements },
+    <statements: SepEndBy<Stmt, "NEWLINE">> => Program { statements },
 };
 
 pub Stmt: Stmt = {
-    "def" <name: Name> "(" <params: List<Param>> ")" ":" <return_type: Name> "=" <body: Expr> =>
+    "def" <name: Name> "(" <params: SepEndBy<Param, ",">> ")" ":" <return_type: Name> "=" <body: Expr> =>
         Stmt::Def {
             name,
             params,
@@ -50,35 +50,26 @@ MulOp: BinOp = {
 };
 
 CallExpr: Expr = {
-    <callee: CallExpr> "(" <args: List<Expr>> ")" =>
+    <callee: CallExpr> "(" <args: SepEndBy<Expr, ",">> ")" =>
         Expr::Call { callee: Box::new(callee), args },
     Term,
 };
 
 LambdaExpr: Expr = {
-    "|" <params: List<Name>> "|" <body: Expr> =>
+    "|" <params: SepEndBy<Name, ",">> "|" <body: Expr> =>
         Expr::Lambda { params, body: Box::new(body) },
 };
 
 pub Term: Expr = {
-    <name: Name> => Expr::Ident(name),
+    <Name> => Expr::Ident(<>),
     "INT" => Expr::IntLit(<>.to_string()),
-    "(" <expr: Expr> ")" => expr,
+    "(" <Expr> ")" => <>,
 };
 
 Name: String = "IDENT" => <>.to_string();
 
 #[inline]
-List<T>: Vec<T> = {
-    <items: (<T> ",")*> <last: T?> => {
-        let mut items = items;
-        items.extend(last);
-        items
-    },
-};
-
-#[inline]
-SepBy<T, U>: Vec<T> = {
+SepEndBy<T, U>: Vec<T> = {
     <items: (<T> U)*> <last: T?> => {
         let mut items = items;
         items.extend(last);
