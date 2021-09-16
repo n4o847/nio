@@ -20,7 +20,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
+    fn test_parse() {
         use ast::BinOp::*;
         use ast::Expr::*;
         use ast::Program;

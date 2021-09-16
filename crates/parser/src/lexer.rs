@@ -282,3 +282,20 @@ impl<'a> Iterator for Lexer<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_next_token() {
+        let code = "12 + 34 * 56";
+        let mut l = Lexer::new(code);
+        assert_eq!(l.next_token(), Token::Int("12"));
+        assert_eq!(l.next_token(), Token::Plus);
+        assert_eq!(l.next_token(), Token::Int("34"));
+        assert_eq!(l.next_token(), Token::Star);
+        assert_eq!(l.next_token(), Token::Int("56"));
+        assert_eq!(l.next_token(), Token::Eof);
+    }
+}
