@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::ast;
+use crate::parser::ast;
 use crate::wasm::syntax as wasm;
 use std::collections::HashMap;
 

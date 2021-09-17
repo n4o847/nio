@@ -1,8 +1,9 @@
 use clap::{App, AppSettings, Arg};
 use nio::codegen::CodeGenerator;
-use nio::parser::Parser;
+use nio::parser;
 use std::fs::{self, File};
 use std::io::{self, Read};
+use std::process;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -29,7 +30,7 @@ fn main() -> Result<()> {
             let mut stdin = io::stdin();
             stdin.read_to_string(&mut buffer)?;
 
-            let result = Parser::parse(buffer.as_str());
+            let result = parser::parse(buffer.as_str());
             println!("{:?}", result);
         }
 
@@ -43,7 +44,10 @@ fn main() -> Result<()> {
             eprintln!("Compile {}", fs::canonicalize(source)?.display());
             let input = fs::read_to_string(source)?;
 
-            let program = Parser::parse(&input)?;
+            let program = parser::parse(&input).unwrap_or_else(|err| {
+                eprintln!("ParseError: {}", err);
+                process::exit(1);
+            });
 
             let module = CodeGenerator::generate(&program)?;
 
