@@ -1,0 +1,27 @@
+Ok(
+    Program {
+        statements: [
+            Expr(
+                BinOp {
+                    op: Add,
+                    left: Ident(
+                        "a",
+                    ),
+                    right: Call {
+                        callee: Ident(
+                            "b",
+                        ),
+                        args: [
+                            Ident(
+                                "x",
+                            ),
+                            Ident(
+                                "y",
+                            ),
+                        ],
+                    },
+                },
+            ),
+        ],
+    },
+)

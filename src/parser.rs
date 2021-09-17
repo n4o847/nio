@@ -1,3 +1,5 @@
+#![deprecated]
+
 use crate::ast::*;
 use crate::lexer::{Lexer, Token};
 

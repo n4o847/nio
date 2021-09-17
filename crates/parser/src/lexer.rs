@@ -1,54 +1,14 @@
-#![deprecated]
-
+use crate::{token::Token, Location};
 use std::str::Chars;
-
-#[derive(Debug, PartialEq)]
-pub enum Token {
-    Ident(String),
-    Int(String),
-    String(String),
-    Plus,     // +
-    Minus,    // -
-    Star,     // *
-    Slash,    // /
-    Percent,  // %
-    Caret,    // ^
-    Not,      // !
-    And,      // &
-    Or,       // |
-    Eq,       // =
-    EqEq,     // ==
-    Gt,       // >
-    Lt,       // <
-    Ge,       // >=
-    Le,       // <=
-    RArrow,   // ->
-    FatArrow, // =>
-    LParen,   // (
-    RParen,   // )
-    LBrace,   // [
-    RBrace,   // ]
-    LBracket, // {
-    RBracket, // }
-    Dot,      // .
-    Comma,    // ,
-    Semi,     // ;
-    Colon,    // :
-    Nl,       // newline
-    Eof,      // end-of-file
-    KwDef,    // def
-    KwLet,    // let
-    Unexpected(char),
-}
 
 pub struct Lexer<'a> {
     input: &'a str,
     chars: Chars<'a>,
 }
 
-impl Lexer<'_> {
-    pub fn new(input: &str) -> Lexer {
-        Lexer {
+impl<'a> Lexer<'a> {
+    pub fn new(input: &'a str) -> Self {
+        Self {
             input,
             chars: input.chars(),
         }
@@ -68,7 +28,7 @@ impl Lexer<'_> {
         self.input.len() - self.chars.as_str().len()
     }
 
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Token<'a> {
         self.skip_whitespace();
         match self.peek_char() {
             Some('a'..='z' | 'A'..='Z' | '_') => {
@@ -88,7 +48,7 @@ impl Lexer<'_> {
                 match &self.input[start..end] {
                     "def" => Token::KwDef,
                     "let" => Token::KwLet,
-                    ident => Token::Ident(ident.to_string()),
+                    ident => Token::Ident(ident),
                 }
             }
             Some('1'..='9') => {
@@ -105,7 +65,7 @@ impl Lexer<'_> {
                     }
                 }
                 let end = self.offset();
-                return Token::Int((&self.input[start..end]).to_string());
+                return Token::Int(&self.input[start..end]);
             }
             Some('"') => {
                 let start = self.offset();
@@ -118,7 +78,7 @@ impl Lexer<'_> {
                         Some('"') => {
                             self.next_char();
                             let end = self.offset();
-                            break Token::String(self.input[start..end].to_string());
+                            break Token::String(&self.input[start..end]);
                         }
                         Some(_) => {
                             self.next_char();
@@ -271,6 +231,18 @@ impl Lexer<'_> {
     }
 }
 
+impl<'a> Iterator for Lexer<'a> {
+    type Item = Result<(Location, Token<'a>, Location), &'static str>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let token = self.next_token();
+        match token {
+            Token::Eof => None,
+            _ => Some(Ok((0, token, 0))),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -279,11 +251,11 @@ mod tests {
     fn test_next_token() {
         let code = "12 + 34 * 56";
         let mut l = Lexer::new(code);
-        assert_eq!(l.next_token(), Token::Int("12".to_string()));
+        assert_eq!(l.next_token(), Token::Int("12"));
         assert_eq!(l.next_token(), Token::Plus);
-        assert_eq!(l.next_token(), Token::Int("34".to_string()));
+        assert_eq!(l.next_token(), Token::Int("34"));
         assert_eq!(l.next_token(), Token::Star);
-        assert_eq!(l.next_token(), Token::Int("56".to_string()));
+        assert_eq!(l.next_token(), Token::Int("56"));
         assert_eq!(l.next_token(), Token::Eof);
     }
 }

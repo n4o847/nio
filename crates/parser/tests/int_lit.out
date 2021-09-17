@@ -1,0 +1,11 @@
+Ok(
+    Program {
+        statements: [
+            Expr(
+                IntLit(
+                    "123",
+                ),
+            ),
+        ],
+    },
+)

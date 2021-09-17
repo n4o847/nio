@@ -4,5 +4,9 @@ version = "0.1.0"
 authors = ["n4o847"]
 edition = "2018"
 
+[workspace]
+members = ["crates/parser"]
+
 [dependencies]
 clap = "3.0.0-beta.4"
+nio_parser = { path = "crates/parser", version = "0.1.0" }
