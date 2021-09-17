@@ -1,5 +1,5 @@
 use crate::ast::*;
-use crate::lexer::Token;
+use crate::token::Token;
 use crate::{Error, Location};
 
 grammar<'a>;
