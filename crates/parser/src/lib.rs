@@ -8,7 +8,7 @@ pub mod token;
 
 use lalrpop_util::ParseError;
 
-pub type Location = ();
+pub type Location = usize;
 pub type Error = &'static str;
 
 pub fn parse(input: &str) -> Result<ast::Program, ParseError<Location, token::Token, Error>> {

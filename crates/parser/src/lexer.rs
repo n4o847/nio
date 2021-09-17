@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::{token::Token, Location};
 use std::str::Chars;
 
 pub struct Lexer<'a> {
@@ -231,8 +231,6 @@ impl<'a> Lexer<'a> {
     }
 }
 
-type Location = ();
-
 impl<'a> Iterator for Lexer<'a> {
     type Item = Result<(Location, Token<'a>, Location), &'static str>;
 
@@ -240,7 +238,7 @@ impl<'a> Iterator for Lexer<'a> {
         let token = self.next_token();
         match token {
             Token::Eof => None,
-            _ => Some(Ok(((), token, ()))),
+            _ => Some(Ok((0, token, 0))),
         }
     }
 }
