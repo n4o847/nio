@@ -1,3 +1,5 @@
+#![deprecated]
+
 use std::str::Chars;
 
 #[derive(Debug, PartialEq)]

@@ -1,3 +1,5 @@
+#![deprecated]
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Program {
     pub statements: Vec<Stmt>,
