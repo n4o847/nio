@@ -2,13 +2,13 @@ use crate::ast::*;
 use crate::lexer::Token;
 use crate::{Error, Location};
 
-grammar<'a>(input: &'a str);
+grammar<'a>;
 
 pub Program: Program = {
-    <statements: SepEndBy<Stmt, "NEWLINE">> => Program { statements },
+    <statements: SepEndBy<Stmt, NEWLINE>> => Program { statements },
 };
 
-pub Stmt: Stmt = {
+Stmt: Stmt = {
     "def" <name: Name> "(" <params: SepEndBy<Param, ",">> ")" ":" <return_type: Name> "=" <body: Expr> =>
         Stmt::Def {
             name,
@@ -23,7 +23,7 @@ Param: (String, String) = {
     <Name> ":" <Name> => (<>),
 };
 
-pub Expr: Expr = {
+Expr: Expr = {
     AddExpr,
     LambdaExpr,
 };
@@ -60,13 +60,13 @@ LambdaExpr: Expr = {
         Expr::Lambda { params, body: Box::new(body) },
 };
 
-pub Term: Expr = {
+Term: Expr = {
     <Name> => Expr::Ident(<>),
-    "INT" => Expr::IntLit(<>.to_string()),
+    INT => Expr::IntLit(<>.to_string()),
     "(" <Expr> ")" => <>,
 };
 
-Name: String = "IDENT" => <>.to_string();
+Name: String = IDENT => <>.to_string();
 
 #[inline]
 SepEndBy<T, U>: Vec<T> = {
@@ -82,9 +82,9 @@ extern {
     type Error = Error;
 
     enum Token<'a> {
-        "IDENT" => Token::Ident(<&'a str>),
-        "INT" => Token::Int(<&'a str>),
-        "STRING" => Token::String(<&'a str>),
+        IDENT => Token::Ident(<&'a str>),
+        INT => Token::Int(<&'a str>),
+        STRING => Token::String(<&'a str>),
         "+" => Token::Plus,
         "-" => Token::Minus,
         "*" => Token::Star,
@@ -112,7 +112,7 @@ extern {
         "," => Token::Comma,
         ";" => Token::Semi,
         ":" => Token::Colon,
-        "NEWLINE" => Token::Nl,
+        NEWLINE => Token::Nl,
         "def" => Token::KwDef,
         "let" => Token::KwLet,
     }
