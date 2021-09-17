@@ -1,0 +1,22 @@
+Ok(
+    Program {
+        statements: [
+            Expr(
+                Lambda {
+                    params: [
+                        "x",
+                    ],
+                    body: BinOp {
+                        op: Add,
+                        left: Ident(
+                            "x",
+                        ),
+                        right: IntLit(
+                            "1",
+                        ),
+                    },
+                },
+            ),
+        ],
+    },
+)

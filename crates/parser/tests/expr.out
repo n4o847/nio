@@ -1,0 +1,29 @@
+Ok(
+    Program {
+        statements: [
+            Expr(
+                BinOp {
+                    op: Add,
+                    left: IntLit(
+                        "1",
+                    ),
+                    right: BinOp {
+                        op: Mul,
+                        left: BinOp {
+                            op: Mul,
+                            left: IntLit(
+                                "2",
+                            ),
+                            right: IntLit(
+                                "3",
+                            ),
+                        },
+                        right: IntLit(
+                            "4",
+                        ),
+                    },
+                },
+            ),
+        ],
+    },
+)
