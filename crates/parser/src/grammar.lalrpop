@@ -29,8 +29,8 @@ Expr: Expr = {
 };
 
 AddExpr: Expr = {
-    <left: AddExpr> <op: AddOp> <right: MulExpr> =>
-        Expr::BinOp { op, left: Box::new(left), right: Box::new(right) },
+    <lhs: AddExpr> <op: AddOp> <rhs: MulExpr> =>
+        Expr::BinOp { op, lhs: Box::new(lhs), rhs: Box::new(rhs) },
     MulExpr,
 };
 
@@ -40,8 +40,8 @@ AddOp: BinOp = {
 };
 
 MulExpr: Expr = {
-    <left: MulExpr> <op: MulOp> <right: CallExpr> =>
-        Expr::BinOp { op, left: Box::new(left), right: Box::new(right) },
+    <lhs: MulExpr> <op: MulOp> <rhs: CallExpr> =>
+        Expr::BinOp { op, lhs: Box::new(lhs), rhs: Box::new(rhs) },
     CallExpr,
 };
 
