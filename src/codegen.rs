@@ -64,12 +64,36 @@ impl CodeGenerator {
     ) -> Result<()> {
         match stmt {
             ir::Stmt::Def {
-                annotations: _,
+                annotations,
                 name: _name,
                 params,
                 return_type,
                 body,
             } => {
+                match annotations.len() {
+                    0 => {}
+                    1 => {
+                        let annot = &annotations[0];
+                        match annot {
+                            ir::Expr::Call { callee, args } => {
+                                match (callee.as_ref(), args.as_slice()) {
+                                    (ir::Expr::Ident(name), [ir::Expr::StringLit(export_name)])
+                                        if name == "export" =>
+                                    {
+                                        let func_idx = wasm::FuncIdx(module.funcs.len() as u32);
+                                        module.exports.push(wasm::Export {
+                                            name: wasm::Name(export_name.to_string()),
+                                            desc: wasm::ExportDesc::Func(func_idx),
+                                        });
+                                    }
+                                    _ => todo!(),
+                                }
+                            }
+                            _ => todo!(),
+                        }
+                    }
+                    _ => todo!(),
+                }
                 let mut r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
                 for (_, param_type) in params.iter() {
                     match param_type {
