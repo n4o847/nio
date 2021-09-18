@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::parser::ast;
+use crate::ir;
 use crate::wasm::syntax as wasm;
 use std::collections::HashMap;
 
@@ -17,14 +17,14 @@ impl CodeGenerator {
         }
     }
 
-    pub fn generate(program: &ast::Program) -> Result<wasm::Module> {
+    pub fn generate(program: &ir::Program) -> Result<wasm::Module> {
         let g = Self::new();
         let mut module = wasm::Module::new();
         g.generate_program(program, &mut module)?;
         Ok(module)
     }
 
-    fn generate_program(&self, program: &ast::Program, module: &mut wasm::Module) -> Result<()> {
+    fn generate_program(&self, program: &ir::Program, module: &mut wasm::Module) -> Result<()> {
         let r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
         let type_idx = wasm::TypeIdx(module.types.len() as u32);
         module.types.push(r#type);
@@ -48,12 +48,12 @@ impl CodeGenerator {
 
     fn generate_stmt(
         &self,
-        stmt: &ast::Stmt,
+        stmt: &ir::Stmt,
         module: &mut wasm::Module,
         instructions: &mut Vec<wasm::Instr>,
     ) -> Result<()> {
         match stmt {
-            ast::Stmt::Def {
+            ir::Stmt::Def {
                 name: _name,
                 params,
                 return_type,
@@ -82,32 +82,32 @@ impl CodeGenerator {
                 });
                 Ok(())
             }
-            ast::Stmt::Expr(expr) => {
+            ir::Stmt::Expr(expr) => {
                 self.generate_expr(expr, instructions)?;
                 Ok(())
             }
         }
     }
 
-    fn generate_expr(&self, expr: &ast::Expr, instructions: &mut Vec<wasm::Instr>) -> Result<()> {
+    fn generate_expr(&self, expr: &ir::Expr, instructions: &mut Vec<wasm::Instr>) -> Result<()> {
         match expr {
-            ast::Expr::BinOp { op, left, right } => {
+            ir::Expr::BinOp { op, left, right } => {
                 self.generate_expr(left, instructions)?;
                 self.generate_expr(right, instructions)?;
                 match op {
-                    ast::BinOp::Add => {
+                    ir::BinOp::Add => {
                         instructions.push(wasm::Instr::I32Add);
                     }
-                    ast::BinOp::Sub => {
+                    ir::BinOp::Sub => {
                         instructions.push(wasm::Instr::I32Sub);
                     }
-                    ast::BinOp::Mul => {
+                    ir::BinOp::Mul => {
                         instructions.push(wasm::Instr::I32Mul);
                     }
                 }
                 Ok(())
             }
-            ast::Expr::IntLit(raw) => {
+            ir::Expr::IntLit(raw) => {
                 let value = raw.parse::<i32>()?;
                 instructions.push(wasm::Instr::I32Const(value as u32));
                 Ok(())

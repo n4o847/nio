@@ -49,7 +49,7 @@ fn main() -> Result<()> {
                 process::exit(1);
             });
 
-            let module = CodeGenerator::generate(&program)?;
+            let module = CodeGenerator::generate(&program.into())?;
 
             eprintln!("Emit {}", fs::canonicalize(target)?.display());
             let mut output = File::create(target)?;
