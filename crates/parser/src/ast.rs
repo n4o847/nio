@@ -6,6 +6,7 @@ pub struct Program {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Stmt {
     Def {
+        annotations: Vec<Expr>,
         name: String,
         params: Vec<(String, String)>,
         return_type: String,

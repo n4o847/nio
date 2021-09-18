@@ -9,14 +9,19 @@ pub Program: Program = {
 };
 
 Stmt: Stmt = {
-    "def" <name: Name> "(" <params: SepEndBy<Param, ",">> ")" ":" <return_type: Name> "=" <body: Expr> =>
+    <annotations: Annotations> "def" <name: Name> "(" <params: SepEndBy<Param, ",">> ")" ":" <return_type: Name> "=" <body: Expr> =>
         Stmt::Def {
+            annotations,
             name,
             params,
             return_type,
             body: Box::new(body),
         },
     Expr => Stmt::Expr(<>),
+};
+
+Annotations: Vec<Expr> = {
+    ("@" <Expr> NEWLINE?)* => <>,
 };
 
 Param: (String, String) = {
@@ -63,6 +68,7 @@ LambdaExpr: Expr = {
 Term: Expr = {
     <Name> => Expr::Ident(<>),
     INT => Expr::IntLit(<>.to_string()),
+    STRING => Expr::StringLit(<>.to_string()),
     "(" <Expr> ")" => <>,
 };
 
@@ -102,6 +108,7 @@ extern {
         "<=" => Token::Le,
         "->" => Token::RArrow,
         "=>" => Token::FatArrow,
+        "@" => Token::At,
         "(" => Token::LParen,
         ")" => Token::RParen,
         "[" => Token::LBrace,

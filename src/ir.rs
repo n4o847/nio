@@ -6,6 +6,7 @@ pub struct Program {
 
 pub enum Stmt {
     Def {
+        annotations: Vec<Expr>,
         name: String,
         params: Vec<(String, Type)>,
         return_type: Type,
@@ -62,11 +63,13 @@ impl From<ast::Stmt> for Stmt {
     fn from(s: ast::Stmt) -> Self {
         match s {
             ast::Stmt::Def {
+                annotations,
                 name,
                 params,
                 return_type,
                 body,
             } => Stmt::Def {
+                annotations: annotations.into_iter().map(Expr::from).collect(),
                 name,
                 params: params
                     .into_iter()

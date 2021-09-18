@@ -22,6 +22,7 @@ pub enum Token<'a> {
     Le,       // <=
     RArrow,   // ->
     FatArrow, // =>
+    At,       // @
     LParen,   // (
     RParen,   // )
     LBrace,   // [

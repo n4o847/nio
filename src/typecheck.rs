@@ -46,6 +46,7 @@ impl TypeChecker {
     fn typecheck_stmt(&self, stmt: &mut Stmt) -> Result<(), TypeError> {
         match stmt {
             Stmt::Def {
+                annotations: _,
                 name: _,
                 params,
                 return_type,

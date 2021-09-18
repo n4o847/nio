@@ -54,6 +54,7 @@ impl CodeGenerator {
     ) -> Result<()> {
         match stmt {
             ir::Stmt::Def {
+                annotations: _,
                 name: _name,
                 params,
                 return_type,

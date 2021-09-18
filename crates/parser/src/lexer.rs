@@ -165,6 +165,10 @@ impl<'a> Lexer<'a> {
                     _ => Token::Lt,
                 }
             }
+            Some('@') => {
+                self.next_char();
+                Token::At
+            }
             Some('(') => {
                 self.next_char();
                 Token::LParen
