@@ -59,8 +59,8 @@ fn main() -> Result<()> {
 
             let module = CodeGenerator::generate(&program)?;
 
-            eprintln!("Emit {}", fs::canonicalize(target)?.display());
             let mut output = File::create(target)?;
+            eprintln!("Emit {}", fs::canonicalize(target)?.display());
             nio::wasm::binary::emit(&mut output, &module)?;
         }
 
