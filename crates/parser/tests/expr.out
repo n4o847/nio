@@ -4,21 +4,21 @@ Ok(
             Expr(
                 BinOp {
                     op: Add,
-                    left: IntLit(
+                    lhs: IntLit(
                         "1",
                     ),
-                    right: BinOp {
+                    rhs: BinOp {
                         op: Mul,
-                        left: BinOp {
+                        lhs: BinOp {
                             op: Mul,
-                            left: IntLit(
+                            lhs: IntLit(
                                 "2",
                             ),
-                            right: IntLit(
+                            rhs: IntLit(
                                 "3",
                             ),
                         },
-                        right: IntLit(
+                        rhs: IntLit(
                             "4",
                         ),
                     },

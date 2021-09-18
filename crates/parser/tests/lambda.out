@@ -8,10 +8,10 @@ Ok(
                     ],
                     body: BinOp {
                         op: Add,
-                        left: Ident(
+                        lhs: Ident(
                             "x",
                         ),
-                        right: IntLit(
+                        rhs: IntLit(
                             "1",
                         ),
                     },

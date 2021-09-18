@@ -18,12 +18,12 @@ pub enum Stmt {
 pub enum Expr {
     BinOp {
         op: BinOp,
-        left: Box<Expr>,
-        right: Box<Expr>,
+        lhs: Box<Expr>,
+        rhs: Box<Expr>,
     },
     Assign {
-        left: String,
-        right: Box<Expr>,
+        lhs: String,
+        rhs: Box<Expr>,
     },
     Lambda {
         params: Vec<String>,

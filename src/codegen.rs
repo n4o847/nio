@@ -91,9 +91,9 @@ impl CodeGenerator {
 
     fn generate_expr(&self, expr: &ir::Expr, instructions: &mut Vec<wasm::Instr>) -> Result<()> {
         match expr {
-            ir::Expr::BinOp { op, left, right } => {
-                self.generate_expr(left, instructions)?;
-                self.generate_expr(right, instructions)?;
+            ir::Expr::BinOp { op, lhs, rhs } => {
+                self.generate_expr(lhs, instructions)?;
+                self.generate_expr(rhs, instructions)?;
                 match op {
                     ir::BinOp::Add => {
                         instructions.push(wasm::Instr::I32Add);

@@ -20,12 +20,12 @@ pub enum Stmt {
 pub enum Expr {
     BinOp {
         op: BinOp,
-        left: Box<Expr>,
-        right: Box<Expr>,
+        lhs: Box<Expr>,
+        rhs: Box<Expr>,
     },
     Assign {
-        left: String,
-        right: Box<Expr>,
+        lhs: String,
+        rhs: Box<Expr>,
     },
     Lambda {
         params: Vec<String>,
@@ -77,14 +77,14 @@ impl From<ast::Stmt> for Stmt {
 impl From<ast::Expr> for Expr {
     fn from(e: ast::Expr) -> Self {
         match e {
-            ast::Expr::BinOp { op, left, right } => Expr::BinOp {
+            ast::Expr::BinOp { op, lhs, rhs } => Expr::BinOp {
                 op: BinOp::from(op),
-                left: Box::new(Expr::from(*left)),
-                right: Box::new(Expr::from(*right)),
+                lhs: Box::new(Expr::from(*lhs)),
+                rhs: Box::new(Expr::from(*rhs)),
             },
-            ast::Expr::Assign { left, right } => Expr::Assign {
-                left,
-                right: Box::new(Expr::from(*right)),
+            ast::Expr::Assign { lhs, rhs } => Expr::Assign {
+                lhs,
+                rhs: Box::new(Expr::from(*rhs)),
             },
             ast::Expr::Lambda { params, body } => Expr::Lambda {
                 params,

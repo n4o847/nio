@@ -4,10 +4,10 @@ Ok(
             Expr(
                 BinOp {
                     op: Add,
-                    left: Ident(
+                    lhs: Ident(
                         "a",
                     ),
-                    right: Call {
+                    rhs: Call {
                         callee: Ident(
                             "b",
                         ),
