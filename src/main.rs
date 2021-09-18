@@ -1,9 +1,10 @@
 use clap::{App, AppSettings, Arg};
-use nio::codegen::CodeGenerator;
-use nio::parser;
-use std::fs::{self, File};
-use std::io::{self, Read};
-use std::process;
+use nio::{codegen::CodeGenerator, parser, typecheck};
+use std::{
+    fs::{self, File},
+    io::{self, Read},
+    process,
+};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -49,7 +50,14 @@ fn main() -> Result<()> {
                 process::exit(1);
             });
 
-            let module = CodeGenerator::generate(&program.into())?;
+            let mut program = program.into();
+
+            typecheck::typecheck(&mut program).unwrap_or_else(|err| {
+                eprintln!("TypeError: {}", err);
+                process::exit(1);
+            });
+
+            let module = CodeGenerator::generate(&program)?;
 
             eprintln!("Emit {}", fs::canonicalize(target)?.display());
             let mut output = File::create(target)?;

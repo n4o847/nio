@@ -61,13 +61,13 @@ impl CodeGenerator {
             } => {
                 let mut r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
                 for (_param_name, param_type) in params.iter() {
-                    match param_type.as_str() {
-                        "Int" => r#type.0 .0.push(wasm::ValType::I32),
+                    match param_type {
+                        ir::Type::Int => r#type.0 .0.push(wasm::ValType::I32),
                         _ => todo!(),
                     }
                 }
-                match return_type.as_str() {
-                    "Int" => r#type.1 .0.push(wasm::ValType::I32),
+                match return_type {
+                    ir::Type::Int => r#type.1 .0.push(wasm::ValType::I32),
                     _ => todo!(),
                 }
                 let type_idx = wasm::TypeIdx(module.types.len() as u32);

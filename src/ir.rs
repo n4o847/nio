@@ -1,22 +1,19 @@
 use crate::parser::ast;
 
-#[derive(Debug, PartialEq, Clone)]
 pub struct Program {
     pub statements: Vec<Stmt>,
 }
 
-#[derive(Debug, PartialEq, Clone)]
 pub enum Stmt {
     Def {
         name: String,
-        params: Vec<(String, String)>,
-        return_type: String,
+        params: Vec<(String, Type)>,
+        return_type: Type,
         body: Box<Expr>,
     },
     Expr(Expr),
 }
 
-#[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
     BinOp {
         op: BinOp,
@@ -40,7 +37,13 @@ pub enum Expr {
     StringLit(String),
 }
 
-#[derive(Debug, PartialEq, Clone)]
+pub enum Type {
+    Unresolved(String),
+    Untyped,
+    Unit,
+    Int,
+}
+
 pub enum BinOp {
     Add,
     Sub,
@@ -65,8 +68,11 @@ impl From<ast::Stmt> for Stmt {
                 body,
             } => Stmt::Def {
                 name,
-                params,
-                return_type,
+                params: params
+                    .into_iter()
+                    .map(|(param_name, param_type)| (param_name, Type::Unresolved(param_type)))
+                    .collect(),
+                return_type: Type::Unresolved(return_type),
                 body: Box::new(Expr::from(*body)),
             },
             ast::Stmt::Expr(e) => Stmt::Expr(Expr::from(e)),
