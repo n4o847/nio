@@ -71,6 +71,7 @@ impl TypeChecker {
                 self.typecheck_expr(lhs)?;
                 self.typecheck_expr(rhs)?;
             }
+            Expr::Ident(_) => {}
             Expr::IntLit(_) => {}
             _ => todo!(),
         }

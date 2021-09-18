@@ -6,6 +6,16 @@ use std::collections::HashMap;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+struct Context<'a> {
+    locals: Vec<(&'a String, &'a ir::Type)>,
+}
+
+impl<'a> Context<'a> {
+    fn new() -> Self {
+        Self { locals: Vec::new() }
+    }
+}
+
 pub struct CodeGenerator {
     func_type_map: HashMap<wasm::FuncType, usize>,
 }
@@ -61,7 +71,7 @@ impl CodeGenerator {
                 body,
             } => {
                 let mut r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
-                for (_param_name, param_type) in params.iter() {
+                for (_, param_type) in params.iter() {
                     match param_type {
                         ir::Type::Int => r#type.0 .0.push(wasm::ValType::I32),
                         _ => todo!(),
@@ -74,27 +84,37 @@ impl CodeGenerator {
                 let type_idx = wasm::TypeIdx(module.types.len() as u32);
                 module.types.push(r#type);
                 let locals = vec![];
+                let mut ctx = Context::new();
+                for (param_name, param_type) in params.iter() {
+                    ctx.locals.push((param_name, param_type));
+                }
                 let mut instructions = vec![];
-                self.generate_expr(body, &mut instructions)?;
+                self.generate_expr(body, &mut ctx, &mut instructions)?;
                 module.funcs.push(wasm::Func {
                     r#type: type_idx,
                     locals,
                     body: wasm::Expr(instructions),
                 });
-                Ok(())
             }
             ir::Stmt::Expr(expr) => {
-                self.generate_expr(expr, instructions)?;
-                Ok(())
+                let mut ctx = Context::new();
+                self.generate_expr(expr, &mut ctx, instructions)?;
+                todo!();
             }
         }
+        Ok(())
     }
 
-    fn generate_expr(&self, expr: &ir::Expr, instructions: &mut Vec<wasm::Instr>) -> Result<()> {
+    fn generate_expr(
+        &self,
+        expr: &ir::Expr,
+        ctx: &mut Context,
+        instructions: &mut Vec<wasm::Instr>,
+    ) -> Result<()> {
         match expr {
             ir::Expr::BinOp { op, lhs, rhs } => {
-                self.generate_expr(lhs, instructions)?;
-                self.generate_expr(rhs, instructions)?;
+                self.generate_expr(lhs, ctx, instructions)?;
+                self.generate_expr(rhs, ctx, instructions)?;
                 match op {
                     ir::BinOp::Add => {
                         instructions.push(wasm::Instr::I32Add);
@@ -106,14 +126,26 @@ impl CodeGenerator {
                         instructions.push(wasm::Instr::I32Mul);
                     }
                 }
-                Ok(())
+            }
+            ir::Expr::Ident(name) => {
+                let mut found = false;
+                for (idx, (local_name, _)) in ctx.locals.iter().enumerate() {
+                    if name == *local_name {
+                        instructions.push(wasm::Instr::LocalGet(wasm::LocalIdx(idx as u32)));
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    return Err("".into());
+                }
             }
             ir::Expr::IntLit(raw) => {
                 let value = raw.parse::<i32>()?;
                 instructions.push(wasm::Instr::I32Const(value as u32));
-                Ok(())
             }
             _ => todo!(),
         }
+        Ok(())
     }
 }
