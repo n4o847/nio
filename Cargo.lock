@@ -363,6 +363,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "nio_parser",
+ "nio_wasm",
 ]
 
 [[package]]
@@ -374,6 +375,10 @@ dependencies = [
  "lalrpop-util",
  "regex",
 ]
+
+[[package]]
+name = "nio_wasm"
+version = "0.1.0"
 
 [[package]]
 name = "once_cell"
