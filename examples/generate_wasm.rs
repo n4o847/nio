@@ -1,5 +1,4 @@
-use nio::wasm::binary::*;
-use nio::wasm::syntax::*;
+use nio::wasm::*;
 use std::fs::File;
 use std::io;
 use std::io::BufWriter;

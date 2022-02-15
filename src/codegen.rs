@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::ir;
-use crate::wasm::syntax as wasm;
+use crate::wasm;
 use std::collections::HashMap;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;

@@ -68,7 +68,7 @@ fn main() -> Result<()> {
 
             let mut output = File::create(target)?;
             eprintln!("Emit {}", fs::canonicalize(target)?.display());
-            nio::wasm::binary::emit(&mut output, &module)?;
+            nio::wasm::emit(&mut output, &module)?;
         }
     }
 
