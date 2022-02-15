@@ -8,5 +8,5 @@ edition = "2021"
 members = ["crates/parser"]
 
 [dependencies]
-clap = "3.0.14"
+clap = { version = "3.0.14", features = ["derive"] }
 nio_parser = { path = "crates/parser", version = "0.1.0" }

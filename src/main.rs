@@ -1,4 +1,4 @@
-use clap::{App, AppSettings, Arg};
+use clap::{Parser, Subcommand};
 use nio::{codegen::CodeGenerator, parser, typecheck};
 use std::{
     fs::{self, File},
@@ -8,25 +8,32 @@ use std::{
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-fn main() -> Result<()> {
-    let matches = App::new("nio")
-        .version(env!("CARGO_PKG_VERSION"))
-        .setting(AppSettings::SubcommandRequiredElseHelp)
-        .subcommand(App::new("parse"))
-        .subcommand(
-            App::new("compile")
-                .arg(Arg::new("INPUT").required(true))
-                .arg(
-                    Arg::new("output")
-                        .short('o')
-                        .long("output")
-                        .takes_value(true),
-                ),
-        )
-        .get_matches();
+#[derive(Parser)]
+#[clap(version)]
+struct Args {
+    #[clap(subcommand)]
+    command: Command,
+}
 
-    match matches.subcommand() {
-        Some(("parse", _)) => {
+#[derive(Subcommand)]
+enum Command {
+    Parse,
+
+    Compile {
+        /// Input file
+        input: String,
+
+        /// Output file
+        #[clap(short, long)]
+        output: Option<String>,
+    },
+}
+
+fn main() -> Result<()> {
+    let args = Args::parse();
+
+    match args.command {
+        Command::Parse => {
             let mut buffer = String::new();
             let mut stdin = io::stdin();
             stdin.read_to_string(&mut buffer)?;
@@ -35,10 +42,10 @@ fn main() -> Result<()> {
             println!("{:?}", result);
         }
 
-        Some(("compile", matches)) => {
-            let source = matches.value_of("INPUT").unwrap();
-            let target = &match matches.value_of("output") {
-                Some(target) => target.to_string(),
+        Command::Compile { input, output } => {
+            let source = input.as_str();
+            let target = &match output {
+                Some(target) => target,
                 None => source.strip_suffix(".nio").unwrap_or(source).to_string() + ".wasm",
             }[..];
 
@@ -63,8 +70,6 @@ fn main() -> Result<()> {
             eprintln!("Emit {}", fs::canonicalize(target)?.display());
             nio::wasm::binary::emit(&mut output, &module)?;
         }
-
-        _ => {}
     }
 
     Ok(())
