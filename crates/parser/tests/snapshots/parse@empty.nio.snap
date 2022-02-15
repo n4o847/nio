@@ -1,0 +1,12 @@
+---
+source: crates/parser/tests/parser.rs
+assertion_line: 11
+expression: "&result"
+input_file: crates/parser/tests/inputs/empty.nio
+
+---
+Ok(
+    Program {
+        statements: [],
+    },
+)

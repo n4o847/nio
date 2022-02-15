@@ -15,26 +15,3 @@ pub fn parse(input: &str) -> Result<ast::Program, ParseError<Location, token::To
     let lexer = lexer::Lexer::new(input);
     grammar::ProgramParser::new().parse(lexer)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    macro_rules! test_parse {
-        ($test_name:ident, $name:expr) => {
-            #[test]
-            fn $test_name() {
-                let input = include_str!(concat!("../tests/", $name, ".in"));
-                let output = include_str!(concat!("../tests/", $name, ".out"));
-                let result = &format!("{:#?}", parse(input));
-                assert_eq!(result, output, "expected: {}", result);
-            }
-        };
-    }
-
-    test_parse!(test_parse_empty, "empty");
-    test_parse!(test_parse_int_lit, "int_lit");
-    test_parse!(test_parse_expr, "expr");
-    test_parse!(test_parse_lambda, "lambda");
-    test_parse!(test_parse_call, "call");
-}
