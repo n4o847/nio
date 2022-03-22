@@ -17,6 +17,12 @@ Stmt: Stmt = {
             return_type,
             body: Box::new(body),
         },
+    "let" <name: Name> <type_: (":" <Name>)?> "=" <value: Expr> =>
+        Stmt::Let {
+            name,
+            type_,
+            value: Box::new(value),
+        },
     Expr => Stmt::Expr(<>),
 };
 

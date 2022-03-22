@@ -58,6 +58,14 @@ impl TypeChecker {
                 self.resolve_type(return_type)?;
                 self.typecheck_expr(body)?;
             }
+            Stmt::Let {
+                name: _,
+                type_,
+                value,
+            } => {
+                self.resolve_type(type_)?;
+                self.typecheck_expr(value)?;
+            }
             Stmt::Expr(expr) => {
                 self.typecheck_expr(expr)?;
             }

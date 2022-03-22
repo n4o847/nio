@@ -10,6 +10,11 @@ pub enum Stmt {
         return_type: Type,
         body: Box<Expr>,
     },
+    Let {
+        name: String,
+        type_: Type,
+        value: Box<Expr>,
+    },
     Expr(Expr),
 }
 

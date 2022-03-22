@@ -35,20 +35,20 @@ impl CodeGenerator {
     }
 
     fn generate_program(&self, program: &ir::Program, module: &mut wasm::Module) -> Result<()> {
+        let mut ctx = Context::new();
         let r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
         let type_idx = wasm::TypeIdx(module.types.len() as u32);
         module.types.push(r#type);
-        let locals = vec![];
-        let mut instructions = vec![];
+        let mut start_func = wasm::Func {
+            r#type: type_idx,
+            locals: vec![],
+            body: wasm::Expr(vec![]),
+        };
         for stmt in program.statements.iter() {
-            self.generate_stmt(stmt, module, &mut instructions)?;
+            self.generate_stmt(stmt, &mut ctx, module, &mut start_func)?;
         }
         let func_idx = wasm::FuncIdx(module.funcs.len() as u32);
-        module.funcs.push(wasm::Func {
-            r#type: type_idx,
-            locals,
-            body: wasm::Expr(instructions),
-        });
+        module.funcs.push(start_func);
         module.exports.push(wasm::Export {
             name: wasm::Name("_start".to_string()),
             desc: wasm::ExportDesc::Func(func_idx),
@@ -56,11 +56,12 @@ impl CodeGenerator {
         Ok(())
     }
 
-    fn generate_stmt(
+    fn generate_stmt<'a>(
         &self,
-        stmt: &ir::Stmt,
+        stmt: &'a ir::Stmt,
+        ctx: &mut Context<'a>,
         module: &mut wasm::Module,
-        instructions: &mut Vec<wasm::Instr>,
+        func: &mut wasm::Func,
     ) -> Result<()> {
         match stmt {
             ir::Stmt::Def {
@@ -120,9 +121,16 @@ impl CodeGenerator {
                     body: wasm::Expr(instructions),
                 });
             }
+            ir::Stmt::Let { name, type_, value } => {
+                self.generate_expr(value, ctx, &mut func.body.0)?;
+                func.locals.push(wasm::ValType::I32);
+                let local_idx = wasm::LocalIdx(ctx.locals.len() as u32);
+                ctx.locals.push((name, type_));
+                func.body.0.push(wasm::Instr::LocalSet(local_idx));
+            }
             ir::Stmt::Expr(expr) => {
                 let mut ctx = Context::new();
-                self.generate_expr(expr, &mut ctx, instructions)?;
+                self.generate_expr(expr, &mut ctx, &mut func.body.0)?;
                 todo!();
             }
         }

@@ -12,6 +12,11 @@ pub enum Stmt {
         return_type: String,
         body: Box<Expr>,
     },
+    Let {
+        name: String,
+        type_: Option<String>,
+        value: Box<Expr>,
+    },
     Expr(Expr),
 }
 

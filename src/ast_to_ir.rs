@@ -28,6 +28,14 @@ impl From<ast::Stmt> for ir::Stmt {
                 return_type: ir::Type::Unresolved(return_type),
                 body: Box::new(ir::Expr::from(*body)),
             },
+            ast::Stmt::Let { name, type_, value } => ir::Stmt::Let {
+                name,
+                type_: match type_ {
+                    Some(type_) => ir::Type::Unresolved(type_),
+                    None => ir::Type::Untyped,
+                },
+                value: Box::new(ir::Expr::from(*value)),
+            },
             ast::Stmt::Expr(e) => ir::Stmt::Expr(ir::Expr::from(e)),
         }
     }
