@@ -49,7 +49,7 @@ fn main() -> Result<()> {
                 None => source.strip_suffix(".nio").unwrap_or(source).to_string() + ".wasm",
             }[..];
 
-            eprintln!("Compile {}", fs::canonicalize(source)?.display());
+            eprintln!("Compile {}", canonicalize(source)?);
             let input = fs::read_to_string(source)?;
 
             let program = parser::parse(&input).unwrap_or_else(|err| {
@@ -67,10 +67,20 @@ fn main() -> Result<()> {
             let module = CodeGenerator::generate(&program)?;
 
             let mut output = File::create(target)?;
-            eprintln!("Emit {}", fs::canonicalize(target)?.display());
+            eprintln!("Emit {}", canonicalize(target)?);
             nio::wasm::emit(&mut output, &module)?;
         }
     }
 
     Ok(())
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_os = "wasi")))]
+fn canonicalize(path: &str) -> io::Result<String> {
+    Ok(format!("{}", fs::canonicalize(path)?.display()))
+}
+
+#[cfg(all(target_arch = "wasm32", target_os = "wasi"))]
+fn canonicalize(path: &str) -> io::Result<String> {
+    Ok(format!("{}", path))
 }
