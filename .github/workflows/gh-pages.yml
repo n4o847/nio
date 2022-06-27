@@ -16,6 +16,10 @@ jobs:
         with:
           node-version: '14'
 
+      - uses: actions-rs/toolchain@v1
+        with:
+          target: wasm32-wasi
+
       - uses: actions/cache@v3
         with:
           path: ~/.npm
@@ -32,6 +36,11 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target wasm32-wasi
 
       - run: |
           mkdir -p dist
