@@ -5,7 +5,7 @@ async function main() {
   const $target = document.querySelector("#target") as HTMLTextAreaElement;
   const $parse = document.querySelector("#parse") as HTMLButtonElement;
 
-  const vm = new NioVM();
+  const vm = await NioVM.load();
 
   await vm.exec({ args: ["--version"] });
   $target.value = [

@@ -3,18 +3,35 @@ import { WASI, WASIExitError } from "@wasmer/wasi";
 import { WasmFs } from "@wasmer/wasmfs";
 import WASM_URL from "../../target/wasm32-wasi/release/nio.wasm?url";
 
-const module = await WebAssembly.compileStreaming(fetch(WASM_URL));
+let moduleCache: WebAssembly.Module | null = null;
+
+export interface ConstructorOptions {
+  module: WebAssembly.Module;
+  fs: IFs;
+}
 
 export interface ExecOptions {
   args: string[];
 }
 
 export class NioVM {
+  module: WebAssembly.Module;
   fs: IFs;
 
-  constructor() {
+  static async load() {
+    if (!moduleCache) {
+      moduleCache = await WebAssembly.compileStreaming(fetch(WASM_URL));
+    }
     const wasmFs = new WasmFs();
-    this.fs = wasmFs.fs;
+    return new NioVM({
+      module: moduleCache,
+      fs: wasmFs.fs,
+    });
+  }
+
+  constructor({ module, fs }: ConstructorOptions) {
+    this.module = module;
+    this.fs = fs;
   }
 
   async exec({ args }: ExecOptions) {
@@ -31,8 +48,8 @@ export class NioVM {
       },
     });
     const instance = await WebAssembly.instantiate(
-      module,
-      wasi.getImports(module)
+      this.module,
+      wasi.getImports(this.module)
     );
     try {
       wasi.start(instance);
