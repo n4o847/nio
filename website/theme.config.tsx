@@ -14,6 +14,11 @@ const config: DocsThemeConfig = {
     text: <>&copy; 2019 n4o847</>,
   },
   i18n: [],
+  useNextSeoProps() {
+    return {
+      titleTemplate: "%s \u2013 Nio",
+    };
+  },
 };
 
 export default config;
