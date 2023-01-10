@@ -3,30 +3,25 @@ name: GitHub Pages
 on:
   push:
     branches:
-      - master
-  pull_request:
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: wasm32-wasi
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - uses: actions/cache@v3
         with:
@@ -52,7 +47,7 @@ jobs:
           cd ..
 
       - uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
