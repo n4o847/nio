@@ -44,15 +44,27 @@ export const Playground: React.FC = () => {
   }, [vm, source]);
 
   return (
-    <div>
-      <textarea
-        value={source}
-        onChange={(e) => setSource(e.target.value)}
-        cols={30}
-        rows={10}
-      ></textarea>
-      <button onClick={parse}>Parse</button>
-      <textarea readOnly value={target} cols={30} rows={10}></textarea>
+    <div className="py-6 w-full h-4/5 grid grid-cols-3 gap-2">
+      <div className="col-span-2 flex flex-col">
+        <textarea
+          className="px-2 py-1 border border-gray-300 dark:border-gray-500 rounded font-mono flex-grow"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+        ></textarea>
+      </div>
+      <div className="flex flex-col gap-2">
+        <textarea
+          className="px-2 py-1 border border-gray-300 dark:border-gray-500 rounded font-mono flex-grow bg-gray-100 dark:bg-gray-500"
+          readOnly
+          value={target}
+        ></textarea>
+        <button
+          className="p-2 bg-sky-500 hover:bg-sky-600 text-white rounded font-bold"
+          onClick={parse}
+        >
+          Parse
+        </button>
+      </div>
     </div>
   );
 };
