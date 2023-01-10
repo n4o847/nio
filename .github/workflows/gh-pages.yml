@@ -3,12 +3,12 @@ name: GitHub Pages
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -52,7 +52,7 @@ jobs:
           cd ..
 
       - uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
