@@ -1,0 +1,10 @@
+{
+  "name": "nio",
+  "scripts": {
+    "dev": "npm run dev -w website",
+    "build:wasm": "cargo build --release --target wasm32-wasi"
+  },
+  "workspaces": [
+    "website"
+  ]
+}

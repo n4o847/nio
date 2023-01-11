@@ -39,15 +39,11 @@ jobs:
           args: --release --target wasm32-wasi
 
       - run: |
-          mkdir -p dist
-          cd playground
           npm ci
-          npm run build
-          mv dist ../dist/playground
-          cd ..
+          npm run build -w website
 
       - uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./website/out

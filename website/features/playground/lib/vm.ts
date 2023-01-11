@@ -1,7 +1,11 @@
 import { IFs } from "memfs";
 import { WASI, WASIExitError } from "@wasmer/wasi";
 import { WasmFs } from "@wasmer/wasmfs";
-import WASM_URL from "../../target/wasm32-wasi/release/nio.wasm?url";
+
+const WASM_URL = new URL(
+  "../../../../target/wasm32-wasi/release/nio.wasm",
+  import.meta.url
+);
 
 let moduleCache: WebAssembly.Module | null = null;
 
