@@ -1,0 +1,16 @@
+---
+source: nio_parser/tests/parser.rs
+expression: "&result"
+input_file: nio_parser/tests/inputs/string_lit.nio
+---
+Ok(
+    Program {
+        statements: [
+            Expr(
+                StringLit(
+                    "hello",
+                ),
+            ),
+        ],
+    },
+)

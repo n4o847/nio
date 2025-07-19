@@ -1,4 +1,4 @@
-use crate::{token::Token, Location};
+use crate::{Location, token::Token};
 use std::str::Chars;
 
 pub struct Lexer<'a> {
@@ -70,6 +70,7 @@ impl<'a> Lexer<'a> {
             Some('"') => {
                 let start = self.offset();
                 self.next_char();
+                let mut value = String::new();
                 loop {
                     match self.peek_char() {
                         Some('\\') => {
@@ -78,9 +79,13 @@ impl<'a> Lexer<'a> {
                         Some('"') => {
                             self.next_char();
                             let end = self.offset();
-                            break Token::String(&self.input[start..end]);
+                            break Token::String {
+                                raw: &self.input[start..end],
+                                value,
+                            };
                         }
-                        Some(_) => {
+                        Some(ch) => {
+                            value.push(ch);
                             self.next_char();
                         }
                         None => {

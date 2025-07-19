@@ -74,7 +74,7 @@ LambdaExpr: Expr = {
 Term: Expr = {
     <Name> => Expr::Ident(<>),
     INT => Expr::IntLit(<>.to_string()),
-    STRING => Expr::StringLit(<>.to_string()),
+    STRING => Expr::StringLit(<>),
     "(" <Expr> ")" => <>,
 };
 
@@ -96,7 +96,7 @@ extern {
     enum Token<'a> {
         IDENT => Token::Ident(<&'a str>),
         INT => Token::Int(<&'a str>),
-        STRING => Token::String(<&'a str>),
+        STRING => Token::String { value: <String>, .. },
         "+" => Token::Plus,
         "-" => Token::Minus,
         "*" => Token::Star,

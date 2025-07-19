@@ -4,7 +4,7 @@ use std::fmt;
 pub enum Token<'a> {
     Ident(&'a str),
     Int(&'a str),
-    String(&'a str),
+    String { raw: &'a str, value: String },
     Plus,     // +
     Minus,    // -
     Star,     // *
