@@ -2,7 +2,7 @@
 name = "nio"
 version = "0.1.0"
 authors = ["n4o847"]
-edition = "2021"
+edition = "2024"
 
 [workspace]
 members = [
