@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useState } from "react";
 import { NioVM } from "../lib/vm";
 
@@ -44,17 +46,17 @@ export const Playground: React.FC = () => {
   }, [vm, source]);
 
   return (
-    <div className="py-6 w-full h-4/5 grid grid-cols-3 gap-2">
+    <div className="py-6 w-full h-96 grid grid-cols-3 gap-2">
       <div className="col-span-2 flex flex-col">
         <textarea
-          className="px-2 py-1 border border-gray-300 dark:border-gray-500 rounded font-mono flex-grow"
+          className="px-2 py-1 border border-gray-300 dark:border-gray-500 rounded font-mono grow"
           value={source}
           onChange={(e) => setSource(e.target.value)}
         ></textarea>
       </div>
       <div className="flex flex-col gap-2">
         <textarea
-          className="px-2 py-1 border border-gray-300 dark:border-gray-500 rounded font-mono flex-grow bg-gray-100 dark:bg-gray-500"
+          className="px-2 py-1 border border-gray-300 dark:border-gray-500 rounded font-mono grow bg-gray-100 dark:bg-gray-500"
           readOnly
           value={target}
         ></textarea>
