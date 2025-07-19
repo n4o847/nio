@@ -3,7 +3,7 @@ import { WASI, WASIExitError } from "@wasmer/wasi";
 import { WasmFs } from "@wasmer/wasmfs";
 
 const WASM_URL = new URL(
-  "../../../../target/wasm32-wasi/release/nio.wasm",
+  "../../../../target/wasm32-wasip1/release/nio.wasm",
   import.meta.url
 );
 

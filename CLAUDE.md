@@ -18,7 +18,7 @@ Nio is a programming language that compiles to WebAssembly. The project consists
 - `cargo run -- compile <input.nio> [-o output.wasm]` - Compile Nio source to WASM
 
 ### WebAssembly Build
-- `cargo build --release --target wasm32-wasi` or `npm run build:wasm` - Build WASM version of compiler
+- `cargo build --release --target wasm32-wasip1` or `npm run build:wasm` - Build WASM version of compiler
 
 ### Website Development  
 - `npm run dev` or `npm run dev -w website` - Start Next.js dev server for documentation website
@@ -67,4 +67,4 @@ Nio is a programming language that compiles to WebAssembly. The project consists
 - Snapshot testing for parser validation
 - Workspace setup with multiple crates
 - Website uses Nextra theme for documentation
-- WASM target supports both native and WASI compilation
+- WASM target supports both native and WASI compilation (wasm32-wasip1)
