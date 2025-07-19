@@ -14,14 +14,14 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
 
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: wasm32-wasi
+          target: wasm32-wasip1
 
       - uses: actions/cache@v3
         with:
@@ -36,7 +36,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --target wasm32-wasi
+          args: --release --target wasm32-wasip1
 
       - run: |
           npm ci
