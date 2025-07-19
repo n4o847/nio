@@ -27,29 +27,29 @@ Nio is a programming language that compiles to WebAssembly. The project consists
 
 ### Testing
 - Parser tests use snapshot testing with insta crate
-- Test files are in `crates/parser/tests/inputs/*.nio`
+- Test files are in `nio_parser/tests/inputs/*.nio`
 - Run `cargo test` to execute all tests
 
 ## Architecture
 
 ### Compilation Pipeline
-1. **Lexer** (`crates/parser/src/lexer.rs`) - Tokenizes Nio source code
-2. **Parser** (`crates/parser/src/grammar.lalrpop`) - LALRPOP grammar generates AST
+1. **Lexer** (`nio_parser/src/lexer.rs`) - Tokenizes Nio source code
+2. **Parser** (`nio_parser/src/grammar.lalrpop`) - LALRPOP grammar generates AST
 3. **AST to IR** (`src/ast_to_ir.rs`) - Converts AST to intermediate representation
 4. **Type Checker** (`src/typecheck.rs`) - Validates types in IR
 5. **Code Generator** (`src/codegen.rs`) - Generates WASM module from IR
-6. **WASM Emitter** (`crates/wasm/`) - Outputs binary WASM format
+6. **WASM Emitter** (`nio_wasm/`) - Outputs binary WASM format
 
 ### Workspace Structure
 - Root crate: Main compiler CLI (`src/main.rs`, `src/lib.rs`)
-- `crates/parser/`: Lexer, LALRPOP parser, AST definitions
-- `crates/wasm/`: WASM module representation and binary emission
+- `nio_parser/`: Lexer, LALRPOP parser, AST definitions
+- `nio_wasm/`: WASM module representation and binary emission
 - `website/`: Next.js documentation site with Nextra and Tailwind
 - `docs/`: Language documentation including grammar specification
 
 ### Key Entry Points
 - `src/main.rs` - CLI interface with parse and compile subcommands
-- `crates/parser/src/lib.rs` - Main parse function using LALRPOP
+- `nio_parser/src/lib.rs` - Main parse function using LALRPOP
 - `src/codegen.rs:30` - CodeGenerator::generate() method
 - `website/features/playground/` - Interactive playground component
 
