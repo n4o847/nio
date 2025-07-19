@@ -1,9 +1,9 @@
-import type { LayoutProps } from ".next/types/app/layout";
 import type { Metadata } from "next";
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import { Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
+import type { PropsWithChildren } from "react";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: LayoutProps) {
+export default async function RootLayout({ children }: PropsWithChildren) {
   const navbar = (
     <Navbar
       logo={<span>Nio</span>}
