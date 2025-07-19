@@ -1,12 +1,10 @@
-#[macro_use]
-extern crate lalrpop_util;
-
 pub mod ast;
-lalrpop_mod!(pub grammar);
 pub mod lexer;
 pub mod token;
 
-use lalrpop_util::ParseError;
+use lalrpop_util::{ParseError, lalrpop_mod};
+
+lalrpop_mod!(pub grammar);
 
 pub type Location = usize;
 pub type Error = &'static str;
