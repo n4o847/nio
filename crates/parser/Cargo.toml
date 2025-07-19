@@ -5,10 +5,10 @@ edition = "2024"
 build = "build.rs"
 
 [build-dependencies]
-lalrpop = "0.19.7"
+lalrpop = "0.22.2"
 
 [dependencies]
-lalrpop-util = "0.19.7"
+lalrpop-util = "0.22.2"
 regex = "1.5.5"
 
 [dev-dependencies]

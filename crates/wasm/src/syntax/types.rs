@@ -27,17 +27,17 @@ pub struct Limits {
 
 // Memory Types
 
-pub struct MemType(Limits);
+pub struct MemType(pub Limits);
 
 // Table Types
 
-pub struct TableType(Limits, ElemType);
+pub struct TableType(pub Limits, pub ElemType);
 
 pub struct ElemType;
 
 // Global Types
 
-pub struct GlobalType(Mut, ValType);
+pub struct GlobalType(pub Mut, pub ValType);
 
 pub enum Mut {
     Const,
