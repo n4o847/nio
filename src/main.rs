@@ -8,8 +8,21 @@ use std::{
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+macro_rules! version {
+    () => {
+        concat!(
+            env!("CARGO_PKG_VERSION"),
+            " (",
+            env!("GIT_COMMIT_HASH"),
+            " ",
+            env!("GIT_COMMIT_DATE"),
+            ")"
+        )
+    };
+}
+
 #[derive(Parser)]
-#[clap(version)]
+#[clap(version = version!())]
 struct Args {
     #[clap(subcommand)]
     command: Command,
