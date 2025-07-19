@@ -14,3 +14,6 @@ members = [
 clap = { version = "3.0.14", features = ["derive"] }
 nio_parser = { path = "nio_parser" }
 nio_wasm = { path = "nio_wasm" }
+
+[dev-dependencies]
+wasmtime = "34.0.2"
