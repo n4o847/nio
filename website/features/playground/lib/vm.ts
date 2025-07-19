@@ -1,10 +1,10 @@
-import { IFs } from "memfs";
 import { WASI, WASIExitError } from "@wasmer/wasi";
 import { WasmFs } from "@wasmer/wasmfs";
+import type { IFs } from "memfs";
 
 const WASM_URL = new URL(
   "../../../../target/wasm32-wasip1/release/nio.wasm",
-  import.meta.url
+  import.meta.url,
 );
 
 let moduleCache: WebAssembly.Module | null = null;
@@ -53,7 +53,7 @@ export class NioVM {
     });
     const instance = await WebAssembly.instantiate(
       this.module,
-      wasi.getImports(this.module)
+      wasi.getImports(this.module),
     );
     try {
       wasi.start(instance);

@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("node:fs");
 
 const main = async () => {
   const buffer = fs.readFileSync("./examples/add.wasm");

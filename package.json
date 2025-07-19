@@ -2,7 +2,11 @@
   "name": "nio",
   "scripts": {
     "dev": "npm run dev -w website",
-    "build:wasm": "cargo build --release --target wasm32-wasip1"
+    "build:wasm": "cargo build --release --target wasm32-wasip1",
+    "check": "biome check"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.1.2"
   },
   "workspaces": [
     "website"

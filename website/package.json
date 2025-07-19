@@ -6,7 +6,8 @@
     "dev": "next --turbopack",
     "build": "next build",
     "postbuild": "pagefind --site .next/server/app --output-path out/_pagefind",
-    "start": "next start"
+    "start": "next start",
+    "check": "biome check"
   },
   "dependencies": {
     "@wasmer/wasi": "^0.12.0",

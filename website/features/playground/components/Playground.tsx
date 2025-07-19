@@ -21,7 +21,7 @@ export const Playground: React.FC = () => {
           [
             vm.fs.readFileSync("/dev/stdout", "utf8"),
             vm.fs.readFileSync("/dev/stderr", "utf8"),
-          ].join("")
+          ].join(""),
         );
       });
     }
@@ -36,11 +36,11 @@ export const Playground: React.FC = () => {
             [
               vm.fs.readFileSync("/dev/stdout", "utf8"),
               vm.fs.readFileSync("/dev/stderr", "utf8"),
-            ].join("")
+            ].join(""),
           );
         });
       } catch (err) {
-        setTarget((target) => target + String(err) + "\n");
+        setTarget((target) => `${target + String(err)}\n`);
       }
     }
   }, [vm, source]);
@@ -61,6 +61,7 @@ export const Playground: React.FC = () => {
           value={target}
         ></textarea>
         <button
+          type="button"
           className="p-2 bg-sky-500 hover:bg-sky-600 text-white rounded font-bold"
           onClick={parse}
         >
