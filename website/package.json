@@ -12,6 +12,7 @@
   "dependencies": {
     "@wasmer/wasi": "^0.12.0",
     "@wasmer/wasmfs": "^0.12.0",
+    "monaco-editor": "^0.52.2",
     "next": "^15.4.2",
     "nextra": "^4.2.17",
     "nextra-theme-docs": "^4.2.17",
