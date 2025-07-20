@@ -2,14 +2,18 @@
 name = "nio"
 version = "0.1.0"
 authors = ["n4o847"]
-edition = "2021"
+edition = "2024"
 
 [workspace]
 members = [
-    "crates/*",
+    "nio_parser",
+    "nio_wasm",
 ]
 
 [dependencies]
 clap = { version = "3.0.14", features = ["derive"] }
-nio_parser = { path = "crates/parser" }
-nio_wasm = { path = "crates/wasm" }
+nio_parser = { path = "nio_parser" }
+nio_wasm = { path = "nio_wasm" }
+
+[dev-dependencies]
+wasmtime = "34.0.2"

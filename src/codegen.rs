@@ -87,23 +87,23 @@ impl CodeGenerator {
                                             desc: wasm::ExportDesc::Func(func_idx),
                                         });
                                     }
-                                    _ => todo!(),
+                                    _ => todo!("Unsupported annotation: {:?}", annot),
                                 }
                             }
-                            _ => todo!(),
+                            _ => todo!("Unsupported annotation: {:?}", annot),
                         }
                     }
-                    _ => todo!(),
+                    _ => todo!("Multiple annotations not supported"),
                 }
                 let mut r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
                 for (_, param_type) in params.iter() {
                     match param_type {
-                        ir::Type::Int => r#type.0 .0.push(wasm::ValType::I32),
+                        ir::Type::Int => r#type.0.0.push(wasm::ValType::I32),
                         _ => todo!(),
                     }
                 }
                 match return_type {
-                    ir::Type::Int => r#type.1 .0.push(wasm::ValType::I32),
+                    ir::Type::Int => r#type.1.0.push(wasm::ValType::I32),
                     _ => todo!(),
                 }
                 let type_idx = wasm::TypeIdx(module.types.len() as u32);

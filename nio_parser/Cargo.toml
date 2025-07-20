@@ -1,0 +1,15 @@
+[package]
+name = "nio_parser"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[build-dependencies]
+lalrpop = "0.22.2"
+
+[dependencies]
+lalrpop-util = "0.22.2"
+regex = "1.5.5"
+
+[dev-dependencies]
+insta = { version = "1.12.0", features = ["glob"] }

@@ -1,7 +1,9 @@
+#[derive(Debug)]
 pub struct Program {
     pub statements: Vec<Stmt>,
 }
 
+#[derive(Debug)]
 pub enum Stmt {
     Def {
         annotations: Vec<Expr>,
@@ -18,6 +20,7 @@ pub enum Stmt {
     Expr(Expr),
 }
 
+#[derive(Debug)]
 pub enum Expr {
     BinOp {
         op: BinOp,
@@ -41,6 +44,7 @@ pub enum Expr {
     StringLit(String),
 }
 
+#[derive(Debug)]
 pub enum Type {
     Unresolved(String),
     Untyped,
@@ -48,6 +52,7 @@ pub enum Type {
     Int,
 }
 
+#[derive(Debug)]
 pub enum BinOp {
     Add,
     Sub,

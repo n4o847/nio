@@ -1,6 +1,6 @@
 # Grammar
 
-For the full grammar, see [grammar.lalrpop](../crates/parser/src/grammar.lalrpop).
+For the full grammar, see [grammar.lalrpop](../nio_parser/src/grammar.lalrpop).
 
 ## Literals
 
