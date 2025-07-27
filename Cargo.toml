@@ -11,13 +11,13 @@ members = [
 ]
 
 [dependencies]
-clap = { version = "3.0.14", features = ["derive"] }
+clap = { version = "4.5.41", features = ["derive"] }
 nio_parser = { path = "nio_parser" }
 nio_wasm = { path = "nio_wasm" }
 
 [dev-dependencies]
 indoc = "2.0.6"
-wasmtime = "34.0.2"
+wasmtime = "35.0.0"
 
 [features]
 test_node = []
