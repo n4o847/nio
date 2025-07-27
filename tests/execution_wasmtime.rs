@@ -3,7 +3,7 @@ use std::error;
 use wasmtime::{Engine, Instance, Module, Store};
 
 #[test]
-fn test_add() -> Result<(), Box<dyn error::Error>> {
+fn test_wasmtime_add() -> Result<(), Box<dyn error::Error>> {
     let nio_code = concat! {
         r#"@export("add") def add(x: Int, y: Int): Int = x + y"#,
     };

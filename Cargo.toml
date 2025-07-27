@@ -16,4 +16,8 @@ nio_parser = { path = "nio_parser" }
 nio_wasm = { path = "nio_wasm" }
 
 [dev-dependencies]
+indoc = "2.0.6"
 wasmtime = "34.0.2"
+
+[features]
+test_node = []
