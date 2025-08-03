@@ -10,6 +10,9 @@ members = [
     "nio_wasm",
 ]
 
+[workspace.dependencies]
+thiserror = "2.0"
+
 [dependencies]
 clap = { version = "4.5.41", features = ["derive"] }
 nio_parser = { path = "nio_parser" }

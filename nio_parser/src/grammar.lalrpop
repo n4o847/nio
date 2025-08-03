@@ -1,6 +1,7 @@
+use crate::Location;
 use crate::ast::*;
+use crate::lexer;
 use crate::token::Token;
-use crate::{Error, Location};
 
 grammar<'a>;
 
@@ -91,7 +92,7 @@ SepEndBy<T, U>: Vec<T> = {
 
 extern {
     type Location = Location;
-    type Error = Error;
+    type Error = lexer::LexicalError;
 
     enum Token<'a> {
         IDENT => Token::Ident(<&'a str>),

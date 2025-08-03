@@ -1,5 +1,14 @@
-use crate::{Location, token::Token};
 use std::str::Chars;
+
+use thiserror::Error;
+
+use crate::{Location, token::Token};
+
+#[derive(Error, Debug, PartialEq)]
+pub enum LexicalError {
+    #[error("Unterminated string literal")]
+    UnterminatedStringLiteral,
+}
 
 pub struct Lexer<'a> {
     input: &'a str,
@@ -28,11 +37,11 @@ impl<'a> Lexer<'a> {
         self.input.len() - self.chars.as_str().len()
     }
 
-    pub fn next_token(&mut self) -> Token<'a> {
+    pub fn next_token(&mut self) -> Option<Result<(Location, Token<'a>, Location), LexicalError>> {
         self.skip_whitespace();
-        match self.peek_char() {
+        let start = self.offset();
+        let token = match self.peek_char() {
             Some('a'..='z' | 'A'..='Z' | '_') => {
-                let start = self.offset();
                 self.next_char();
                 loop {
                     match self.peek_char() {
@@ -52,7 +61,6 @@ impl<'a> Lexer<'a> {
                 }
             }
             Some('1'..='9') => {
-                let start = self.offset();
                 self.next_char();
                 loop {
                     match self.peek_char() {
@@ -65,16 +73,15 @@ impl<'a> Lexer<'a> {
                     }
                 }
                 let end = self.offset();
-                return Token::Int(&self.input[start..end]);
+                Token::Int(&self.input[start..end])
             }
             Some('"') => {
-                let start = self.offset();
                 self.next_char();
                 let mut value = String::new();
                 loop {
                     match self.peek_char() {
                         Some('\\') => {
-                            break Token::Unexpected('\\');
+                            todo!("Character escapes are not yet supported.");
                         }
                         Some('"') => {
                             self.next_char();
@@ -89,7 +96,7 @@ impl<'a> Lexer<'a> {
                             self.next_char();
                         }
                         None => {
-                            break Token::Unexpected('"');
+                            return Some(Err(LexicalError::UnterminatedStringLiteral));
                         }
                     }
                 }
@@ -222,8 +229,10 @@ impl<'a> Lexer<'a> {
                 self.next_char();
                 Token::Unexpected(ch)
             }
-            None => Token::Eof,
-        }
+            None => return None,
+        };
+        let end = self.offset();
+        Some(Ok((start, token, end)))
     }
 
     fn skip_whitespace(&mut self) {
@@ -241,14 +250,10 @@ impl<'a> Lexer<'a> {
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = Result<(Location, Token<'a>, Location), &'static str>;
+    type Item = Result<(Location, Token<'a>, Location), LexicalError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let token = self.next_token();
-        match token {
-            Token::Eof => None,
-            _ => Some(Ok((0, token, 0))),
-        }
+        self.next_token()
     }
 }
 
@@ -260,11 +265,11 @@ mod tests {
     fn test_next_token() {
         let code = "12 + 34 * 56";
         let mut l = Lexer::new(code);
-        assert_eq!(l.next_token(), Token::Int("12"));
-        assert_eq!(l.next_token(), Token::Plus);
-        assert_eq!(l.next_token(), Token::Int("34"));
-        assert_eq!(l.next_token(), Token::Star);
-        assert_eq!(l.next_token(), Token::Int("56"));
-        assert_eq!(l.next_token(), Token::Eof);
+        assert_eq!(l.next_token(), Some(Ok((0, Token::Int("12"), 2))));
+        assert_eq!(l.next_token(), Some(Ok((3, Token::Plus, 4))));
+        assert_eq!(l.next_token(), Some(Ok((5, Token::Int("34"), 7))));
+        assert_eq!(l.next_token(), Some(Ok((8, Token::Star, 9))));
+        assert_eq!(l.next_token(), Some(Ok((10, Token::Int("56"), 12))));
+        assert_eq!(l.next_token(), None);
     }
 }
