@@ -1,10 +1,19 @@
 #![allow(dead_code)]
 
+use thiserror::Error;
+
 use crate::ir;
 use crate::wasm;
 use std::collections::HashMap;
+use std::num::ParseIntError;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+#[derive(Error, Debug)]
+pub enum CodegenError {
+    #[error("Undefined variable {name:?}")]
+    UndefinedVariable { name: String },
+    #[error("Invalid integer literal {raw:?}: {reason:?}")]
+    InvalidIntegerLiteral { raw: String, reason: ParseIntError },
+}
 
 struct Context<'a> {
     locals: Vec<(&'a String, &'a ir::Type)>,
@@ -27,14 +36,18 @@ impl CodeGenerator {
         }
     }
 
-    pub fn generate(program: &ir::Program) -> Result<wasm::Module> {
+    pub fn generate(program: &ir::Program) -> Result<wasm::Module, CodegenError> {
         let g = Self::new();
         let mut module = wasm::Module::new();
         g.generate_program(program, &mut module)?;
         Ok(module)
     }
 
-    fn generate_program(&self, program: &ir::Program, module: &mut wasm::Module) -> Result<()> {
+    fn generate_program(
+        &self,
+        program: &ir::Program,
+        module: &mut wasm::Module,
+    ) -> Result<(), CodegenError> {
         let mut ctx = Context::new();
         let r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
         let type_idx = wasm::TypeIdx(module.types.len() as u32);
@@ -62,7 +75,7 @@ impl CodeGenerator {
         ctx: &mut Context<'a>,
         module: &mut wasm::Module,
         func: &mut wasm::Func,
-    ) -> Result<()> {
+    ) -> Result<(), CodegenError> {
         match stmt {
             ir::Stmt::Def {
                 annotations,
@@ -142,7 +155,7 @@ impl CodeGenerator {
         expr: &ir::Expr,
         ctx: &mut Context,
         instructions: &mut Vec<wasm::Instr>,
-    ) -> Result<()> {
+    ) -> Result<(), CodegenError> {
         match expr {
             ir::Expr::BinOp { op, lhs, rhs } => {
                 self.generate_expr(lhs, ctx, instructions)?;
@@ -169,11 +182,16 @@ impl CodeGenerator {
                     }
                 }
                 if !found {
-                    return Err("".into());
+                    return Err(CodegenError::UndefinedVariable { name: name.clone() });
                 }
             }
             ir::Expr::IntLit(raw) => {
-                let value = raw.parse::<i32>()?;
+                let value =
+                    raw.parse::<i32>()
+                        .map_err(|err| CodegenError::InvalidIntegerLiteral {
+                            raw: raw.clone(),
+                            reason: err,
+                        })?;
                 instructions.push(wasm::Instr::I32Const(value as u32));
             }
             _ => todo!(),

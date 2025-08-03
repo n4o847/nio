@@ -901,6 +901,7 @@ dependencies = [
  "indoc",
  "nio_parser",
  "nio_wasm",
+ "thiserror 2.0.12",
  "wasmtime",
 ]
 
