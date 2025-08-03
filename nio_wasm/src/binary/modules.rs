@@ -40,8 +40,24 @@ impl<W: io::Write> Emitter<W> {
     }
 
     // Import Section
-    fn emit_import_sec(&mut self) -> io::Result<()> {
-        Ok(())
+    fn emit_import_sec(&mut self, imports: &Vec<Import>) -> io::Result<()> {
+        self.emit_section(2, |e| {
+            e.write_u32(imports.len() as u32)?;
+            for import in imports.iter() {
+                e.write_name(&import.module)?;
+                e.write_name(&import.name)?;
+                match &import.desc {
+                    ImportDesc::Func(x) => {
+                        e.write(&[0x00])?;
+                        e.write_u32(x.0)?;
+                    }
+                    ImportDesc::Table(_tt) => todo!(),
+                    ImportDesc::Mem(_mt) => todo!(),
+                    ImportDesc::Global(_gt) => todo!(),
+                }
+            }
+            Ok(())
+        })
     }
 
     // Function Section
@@ -156,6 +172,10 @@ impl<W: io::Write> Emitter<W> {
         // Types Section
         if !module.types.is_empty() {
             self.emit_type_sec(&module.types)?;
+        }
+
+        if !module.imports.is_empty() {
+            self.emit_import_sec(&module.imports)?;
         }
 
         // Function Section

@@ -56,7 +56,9 @@ impl TypeChecker {
                     self.resolve_type(param_type)?;
                 }
                 self.resolve_type(return_type)?;
-                self.typecheck_expr(body)?;
+                if let Some(body) = body {
+                    self.typecheck_expr(body)?;
+                }
             }
             Stmt::Let {
                 name: _,
@@ -81,6 +83,7 @@ impl TypeChecker {
             }
             Expr::Ident(_) => {}
             Expr::IntLit(_) => {}
+            Expr::Call { .. } => {}
             _ => todo!(),
         }
         Ok(())

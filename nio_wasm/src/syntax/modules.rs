@@ -19,18 +19,25 @@ pub struct Module {
 
 // Indices
 
+#[derive(Clone)]
 pub struct TypeIdx(pub u32);
 
+#[derive(Clone)]
 pub struct FuncIdx(pub u32);
 
+#[derive(Clone)]
 pub struct TableIdx(pub u32);
 
+#[derive(Clone)]
 pub struct MemIdx(pub u32);
 
+#[derive(Clone)]
 pub struct GlobalIdx(pub u32);
 
+#[derive(Clone)]
 pub struct LocalIdx(pub u32);
 
+#[derive(Clone)]
 pub struct LabelIdx(pub u32);
 
 // Functions

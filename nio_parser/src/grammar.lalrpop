@@ -10,13 +10,13 @@ pub Program: Program = {
 };
 
 Stmt: Stmt = {
-    <annotations: Annotations> "def" <name: Name> "(" <params: SepEndBy<Param, ",">> ")" ":" <return_type: Name> "=" <body: Expr> =>
+    <annotations: Annotations> "def" <name: Name> "(" <params: SepEndBy<Param, ",">> ")" ":" <return_type: Name> <body: ("=" <Expr>)?> =>
         Stmt::Def {
             annotations,
             name,
             params,
             return_type,
-            body: Box::new(body),
+            body: body.map(Box::new),
         },
     "let" <name: Name> <type_: (":" <Name>)?> "=" <value: Expr> =>
         Stmt::Let {

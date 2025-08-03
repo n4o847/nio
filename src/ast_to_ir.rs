@@ -26,7 +26,7 @@ impl From<ast::Stmt> for ir::Stmt {
                     .map(|(param_name, param_type)| (param_name, ir::Type::Unresolved(param_type)))
                     .collect(),
                 return_type: ir::Type::Unresolved(return_type),
-                body: Box::new(ir::Expr::from(*body)),
+                body: body.map(|body| Box::new(ir::Expr::from(*body))),
             },
             ast::Stmt::Let { name, type_, value } => ir::Stmt::Let {
                 name,

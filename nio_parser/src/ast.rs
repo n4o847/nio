@@ -10,7 +10,7 @@ pub enum Stmt {
         name: String,
         params: Vec<(String, String)>,
         return_type: String,
-        body: Box<Expr>,
+        body: Option<Box<Expr>>,
     },
     Let {
         name: String,

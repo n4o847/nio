@@ -10,7 +10,7 @@ pub enum Stmt {
         name: String,
         params: Vec<(String, Type)>,
         return_type: Type,
-        body: Box<Expr>,
+        body: Option<Box<Expr>>,
     },
     Let {
         name: String,
@@ -50,6 +50,7 @@ pub enum Type {
     Untyped,
     Unit,
     Int,
+    Func(Vec<Type>, Box<Type>),
 }
 
 #[derive(Debug)]
