@@ -47,7 +47,7 @@ macro_rules! bin {
     };
 }
 
-impl Emitter<'_> {
+impl<W: io::Write> Emitter<W> {
     // Instructions
     fn emit_instr(&mut self, instr: &Instr) -> io::Result<()> {
         use Instr::*;

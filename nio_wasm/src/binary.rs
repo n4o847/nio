@@ -3,23 +3,22 @@ mod modules;
 mod types;
 mod values;
 
-use super::syntax::Module;
 use std::io;
-use std::io::Write;
 
-pub fn emit(writer: &mut dyn Write, module: &Module) -> io::Result<()> {
+use super::syntax::Module;
+
+pub fn emit(writer: impl io::Write, module: &Module) -> io::Result<()> {
     let mut emitter = Emitter::new(writer);
-    emitter.emit_module(module)?;
-    Ok(())
+    emitter.emit_module(module)
 }
 
-struct Emitter<'a> {
-    writer: &'a mut dyn Write,
+struct Emitter<W: io::Write> {
+    writer: W,
 }
 
-impl Emitter<'_> {
-    fn new(writer: &mut dyn Write) -> Emitter {
-        Emitter { writer }
+impl<W: io::Write> Emitter<W> {
+    fn new(writer: W) -> Emitter<W> {
+        Self { writer }
     }
 
     fn write(&mut self, buf: &[u8]) -> io::Result<()> {

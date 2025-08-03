@@ -5,10 +5,10 @@ use super::*;
 
 // https://webassembly.github.io/spec/core/binary/modules.html
 
-impl Emitter<'_> {
+impl<W: io::Write> Emitter<W> {
     fn write_sized<F>(&mut self, f: F) -> io::Result<()>
     where
-        F: FnOnce(&mut Emitter) -> io::Result<()>,
+        F: FnOnce(&mut Emitter<&mut Vec<u8>>) -> io::Result<()>,
     {
         let mut buffer = Vec::new();
         let mut emitter = Emitter::new(&mut buffer);
@@ -21,7 +21,7 @@ impl Emitter<'_> {
     // Sections
     fn emit_section<F>(&mut self, id: u8, f: F) -> io::Result<()>
     where
-        F: FnOnce(&mut Emitter) -> io::Result<()>,
+        F: FnOnce(&mut Emitter<&mut Vec<u8>>) -> io::Result<()>,
     {
         self.write(&[id])?;
         self.write_sized(f)?;

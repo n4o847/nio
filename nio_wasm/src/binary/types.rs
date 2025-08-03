@@ -3,7 +3,7 @@
 use super::super::syntax::*;
 use super::*;
 
-impl Emitter<'_> {
+impl<W: io::Write> Emitter<W> {
     // Value Types
     pub fn emit_val_type(&mut self, val_type: &ValType) -> io::Result<()> {
         self.write(&[match val_type {

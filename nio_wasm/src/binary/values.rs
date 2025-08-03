@@ -3,7 +3,7 @@ use super::*;
 
 // https://webassembly.github.io/spec/core/binary/values.html
 
-impl Emitter<'_> {
+impl<W: io::Write> Emitter<W> {
     // Unsigned Integers
 
     pub fn write_u32(&mut self, mut value: u32) -> io::Result<()> {
