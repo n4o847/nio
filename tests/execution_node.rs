@@ -14,13 +14,7 @@ fn test_node_add() -> Result<(), Box<dyn error::Error>> {
         r#"@export("add") def add(x: Int, y: Int): Int = x + y"#,
     };
 
-    let program = nio_parser::parse(nio_code)?;
-    let mut program = program.into();
-    nio::typecheck::typecheck(&mut program)?;
-    let module = nio::codegen::CodeGenerator::generate(&program)?;
-
-    let mut wasm_bytes = Vec::new();
-    nio::wasm::emit(&mut wasm_bytes, &module)?;
+    let wasm_bytes = nio::compiler::compile(nio_code)?.to_bytes()?;
 
     let process = Command::new("node")
         .arg("-e")

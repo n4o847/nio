@@ -1,9 +1,8 @@
 use clap::{Parser, Subcommand};
-use nio::{codegen::CodeGenerator, parser, typecheck};
+use nio::{compiler, parser};
 use std::{
     fs::{self, File},
     io::{self, Read},
-    process,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -65,23 +64,11 @@ fn main() -> Result<()> {
             eprintln!("Compile {}", canonicalize(source)?);
             let input = fs::read_to_string(source)?;
 
-            let program = parser::parse(&input).unwrap_or_else(|err| {
-                eprintln!("ParseError: {}", err);
-                process::exit(1);
-            });
-
-            let mut program = program.into();
-
-            typecheck::typecheck(&mut program).unwrap_or_else(|err| {
-                eprintln!("TypeError: {}", err);
-                process::exit(1);
-            });
-
-            let module = CodeGenerator::generate(&program)?;
+            let compile = compiler::compile(&input)?;
 
             let mut output = File::create(target)?;
             eprintln!("Emit {}", canonicalize(target)?);
-            nio::wasm::emit(&mut output, &module)?;
+            compile.emit_to(&mut output)?;
         }
     }
 
