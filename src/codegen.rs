@@ -112,7 +112,7 @@ impl CodeGenerator {
         let type_idx = wasm::TypeIdx(module.types.len() as u32);
         module.types.push(r#type);
         let mut start_func = wasm::Func {
-            r#type: type_idx,
+            type_: type_idx,
             locals: vec![],
             body: wasm::Expr(vec![]),
         };
@@ -259,14 +259,14 @@ impl CodeGenerator {
                 let mut instructions = vec![];
                 self.generate_expr(body, &mut ctx, &mut instructions)?;
                 module.funcs.push(wasm::Func {
-                    r#type: type_idx,
+                    type_: type_idx,
                     locals,
                     body: wasm::Expr(instructions),
                 });
             }
             ir::Stmt::Let { name, type_, value } => {
                 self.generate_expr(value, ctx, &mut func.body.0)?;
-                func.locals.push(wasm::ValType::I32);
+                func.locals.push(wasm::ValType::NumType(wasm::NumType::I32));
                 let local_idx = wasm::LocalIdx(ctx.0.as_ref().borrow().locals.len() as u32);
                 ctx.0
                     .as_ref()
@@ -355,12 +355,18 @@ fn to_wasm_func_type(params: &Vec<(String, ir::Type)>, return_type: &ir::Type) -
     let mut func_type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
     for (_, param_type) in params.iter() {
         match param_type {
-            ir::Type::Int => func_type.0.0.push(wasm::ValType::I32),
+            ir::Type::Int => func_type
+                .0
+                .0
+                .push(wasm::ValType::NumType(wasm::NumType::I32)),
             _ => todo!(),
         }
     }
     match return_type {
-        ir::Type::Int => func_type.1.0.push(wasm::ValType::I32),
+        ir::Type::Int => func_type
+            .1
+            .0
+            .push(wasm::ValType::NumType(wasm::NumType::I32)),
         _ => todo!(),
     }
     func_type

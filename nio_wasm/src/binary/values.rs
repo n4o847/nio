@@ -3,7 +3,11 @@ use super::*;
 
 // https://webassembly.github.io/spec/core/binary/values.html
 
+// 5.2 Values
+
 impl<W: io::Write> Emitter<W> {
+    // 5.2.2 Integers
+
     // Unsigned Integers
 
     pub fn write_u32(&mut self, mut value: u32) -> io::Result<()> {
@@ -43,7 +47,7 @@ impl<W: io::Write> Emitter<W> {
         self.write_s32(value as i32)
     }
 
-    // Floating-Point
+    // 5.2.3 Floating-Point
 
     pub fn write_f32(&mut self, value: f32) -> io::Result<()> {
         self.write(&value.to_le_bytes())
@@ -53,7 +57,7 @@ impl<W: io::Write> Emitter<W> {
         self.write(&value.to_le_bytes())
     }
 
-    // Names
+    // 5.2.4 Names
 
     pub fn write_name(&mut self, name: &Name) -> io::Result<()> {
         self.write_u32(name.0.len() as u32)?;

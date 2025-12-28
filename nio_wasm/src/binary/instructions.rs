@@ -31,6 +31,12 @@ macro_rules! bin {
             bin![$e; $($t)*];
         )?
     };
+    ($e:ident; $emit:ident($($x:expr),*) $(, $($t:tt)*)?) => {
+        $e.$emit($($x),*)?;
+        $(
+            bin![$e; $($t)*];
+        )?
+    };
     ($e:ident; $b:expr $(, $($t:tt)*)?) => {
         $e.write(&[$b])?;
         $(
@@ -47,13 +53,14 @@ macro_rules! bin {
     };
 }
 
+// 5.4 Instructions
+
 impl<W: io::Write> Emitter<W> {
-    // Instructions
     fn emit_instr(&mut self, instr: &Instr) -> io::Result<()> {
         use Instr::*;
 
         let buffer = match instr {
-            // Control Instructions
+            // 5.4.1 Control Instructions
             Unreachable => bin![0x00],
             Nop => bin![0x01],
             Block(b, i) => todo!(),
@@ -64,20 +71,29 @@ impl<W: io::Write> Emitter<W> {
             BrTable(ls, l) => todo!(),
             Return => bin![0x0f],
             Call(x) => bin![0x10, u32(x.0)],
-            CallIndirect(x) => bin![0x11, u32(x.0), 0x00],
+            CallIndirect(x, y) => bin![0x11, u32(y.0), u32(x.0)],
 
-            // Parametric Instructions
+            // 5.4.2 Reference Instructions
+            RefNull(t) => bin![0xd0, emit_ref_type(t),],
+            RefIsNull => bin![0xd1],
+            RefFunc(x) => bin![0xd2, u32(x.0)],
+
+            // 5.4.3 Parametric Instructions
             Drop => bin![0x1a],
-            Select => bin![0x1b],
+            Select(None) => bin![0x1b],
+            Select(Some(t)) => bin![0x1c, write_vec(t, |e, val_type| e.emit_val_type(val_type))],
 
-            // Variable Instructions
+            // 5.4.4 Variable Instructions
             LocalGet(x) => bin![0x20, u32(x.0)],
             LocalSet(x) => bin![0x21, u32(x.0)],
             LocalTee(x) => bin![0x22, u32(x.0)],
             GlobalGet(x) => bin![0x23, u32(x.0)],
             GlobalSet(x) => bin![0x24, u32(x.0)],
 
-            // Memory Instructions
+            // 5.4.5 Table Instructions
+            // TODO
+
+            // 5.4.6 Memory Instructions
             I32Load(m) => bin![0x28, u32(m.align), u32(m.offset)],
             I64Load(m) => bin![0x29, u32(m.align), u32(m.offset)],
             F32Load(m) => bin![0x2a, u32(m.align), u32(m.offset)],
@@ -103,8 +119,12 @@ impl<W: io::Write> Emitter<W> {
             I64Store32(m) => bin![0x3e, u32(m.align), u32(m.offset)],
             MemorySize => bin![0x3f, 0x00],
             MemoryGrow => bin![0x40, 0x00],
+            MemoryInit(x) => bin![0xfc, u32(8), u32(x.0), 0x00],
+            DataDrop(x) => bin![0xfc, u32(9), u32(x.0)],
+            MemoryCopy => bin![0xfc, u32(10), 0x00, 0x00],
+            MemoryFill => bin![0xfc, u32(11), 0x00],
 
-            // Numeric Instructions
+            // 5.4.7 Numeric Instructions
             I32Const(n) => bin![0x41, i32(*n)],
             I64Const(n) => todo!(),
             F32Const(z) => bin![0x43, f32(*z)],
@@ -248,14 +268,16 @@ impl<W: io::Write> Emitter<W> {
             I64Extend16S => bin![0xc3],
             I64Extend32S => bin![0xc4],
 
-            I32TruncSatF32S => bin![0xfc, 0],
-            I32TruncSatF32U => bin![0xfc, 1],
-            I32TruncSatF64S => bin![0xfc, 2],
-            I32TruncSatF64U => bin![0xfc, 3],
-            I64TruncSatF32S => bin![0xfc, 4],
-            I64TruncSatF32U => bin![0xfc, 5],
-            I64TruncSatF64S => bin![0xfc, 6],
-            I64TruncSatF64U => bin![0xfc, 7],
+            I32TruncSatF32S => bin![0xfc, u32(0)],
+            I32TruncSatF32U => bin![0xfc, u32(1)],
+            I32TruncSatF64S => bin![0xfc, u32(2)],
+            I32TruncSatF64U => bin![0xfc, u32(3)],
+            I64TruncSatF32S => bin![0xfc, u32(4)],
+            I64TruncSatF32U => bin![0xfc, u32(5)],
+            I64TruncSatF64S => bin![0xfc, u32(6)],
+            I64TruncSatF64U => bin![0xfc, u32(7)],
+            // 5.4.8 Vector Instructions
+            // TODO
         };
 
         self.write(&buffer)?;
@@ -263,7 +285,7 @@ impl<W: io::Write> Emitter<W> {
         Ok(())
     }
 
-    // Expressions
+    // 5.4.9 Expressions
     pub fn emit_expr(&mut self, expr: &Expr) -> io::Result<()> {
         for instr in expr.0.iter() {
             self.emit_instr(&instr)?;

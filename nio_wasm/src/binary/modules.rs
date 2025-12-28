@@ -5,6 +5,8 @@ use super::*;
 
 // https://webassembly.github.io/spec/core/binary/modules.html
 
+// 5.5 Modules
+
 impl<W: io::Write> Emitter<W> {
     fn write_sized<F>(&mut self, f: F) -> io::Result<()>
     where
@@ -18,7 +20,7 @@ impl<W: io::Write> Emitter<W> {
         Ok(())
     }
 
-    // Sections
+    // 5.5.2 Sections
     fn emit_section<F>(&mut self, id: u8, f: F) -> io::Result<()>
     where
         F: FnOnce(&mut Emitter<&mut Vec<u8>>) -> io::Result<()>,
@@ -28,28 +30,27 @@ impl<W: io::Write> Emitter<W> {
         Ok(())
     }
 
-    // Type Section
+    // 5.5.4 Type Section
     fn emit_type_sec(&mut self, types: &Vec<FuncType>) -> io::Result<()> {
         if types.is_empty() {
             return Ok(());
         }
         self.emit_section(1, |e| {
-            e.write_u32(types.len() as u32)?;
-            for func_type in types.iter() {
+            e.write_vec(types, |e, func_type| {
                 e.emit_func_type(func_type)?;
-            }
+                Ok(())
+            })?;
             Ok(())
         })
     }
 
-    // Import Section
+    // 5.5.5 Import Section
     fn emit_import_sec(&mut self, imports: &Vec<Import>) -> io::Result<()> {
         if imports.is_empty() {
             return Ok(());
         }
         self.emit_section(2, |e| {
-            e.write_u32(imports.len() as u32)?;
-            for import in imports.iter() {
+            e.write_vec(imports, |e, import| {
                 e.write_name(&import.module)?;
                 e.write_name(&import.name)?;
                 match &import.desc {
@@ -61,114 +62,191 @@ impl<W: io::Write> Emitter<W> {
                     ImportDesc::Mem(_mt) => todo!(),
                     ImportDesc::Global(_gt) => todo!(),
                 }
-            }
+                Ok(())
+            })?;
             Ok(())
         })
     }
 
-    // Function Section
+    // 5.5.6 Function Section
     fn emit_func_sec(&mut self, funcs: &Vec<Func>) -> io::Result<()> {
         if funcs.is_empty() {
             return Ok(());
         }
         self.emit_section(3, |e| {
-            e.write_u32(funcs.len() as u32)?;
-            for func in funcs.iter() {
-                e.write_u32(func.r#type.0)?;
-            }
+            e.write_vec(funcs, |e, func| {
+                e.write_u32(func.type_.0)?;
+                Ok(())
+            })?;
             Ok(())
         })
     }
 
-    // Table Section
+    // 5.5.7 Table Section
     fn emit_table_sec(&mut self, tables: &Vec<Table>) -> io::Result<()> {
         if tables.is_empty() {
             return Ok(());
         }
         self.emit_section(4, |e| {
-            e.write_u32(tables.len() as u32)?;
-            for table in tables.iter() {
-                e.emit_table_type(&table.r#type)?;
-            }
+            e.write_vec(tables, |e, table| {
+                e.emit_table_type(&table.type_)?;
+                Ok(())
+            })?;
             Ok(())
         })
     }
 
-    // Memory Section
+    // 5.5.8 Memory Section
     fn emit_mem_sec(&mut self) -> io::Result<()> {
         todo!()
     }
 
-    // Global Section
+    // 5.5.9 Global Section
     fn emit_global_sec(&mut self) -> io::Result<()> {
         todo!()
     }
 
-    // Export Section
+    // 5.5.10 Export Section
     fn emit_export_sec(&mut self, exports: &Vec<Export>) -> io::Result<()> {
         if exports.is_empty() {
             return Ok(());
         }
         self.emit_section(7, |e| {
-            e.write_u32(exports.len() as u32)?;
-            for export in exports.iter() {
+            e.write_vec(exports, |e, export| {
                 e.write_name(&export.name)?;
-                use ExportDesc::*;
                 match &export.desc {
-                    Func(x) => {
+                    ExportDesc::Func(x) => {
                         e.write_u32(0x00)?;
                         e.write_u32(x.0)?;
                     }
-                    Table(x) => {
+                    ExportDesc::Table(x) => {
                         e.write_u32(0x01)?;
                         e.write_u32(x.0)?;
                     }
-                    Mem(x) => {
+                    ExportDesc::Mem(x) => {
                         e.write_u32(0x02)?;
                         e.write_u32(x.0)?;
                     }
-                    Global(x) => {
+                    ExportDesc::Global(x) => {
                         e.write_u32(0x03)?;
                         e.write_u32(x.0)?;
                     }
                 }
-            }
+                Ok(())
+            })?;
             Ok(())
         })
     }
 
-    // Start Section
+    // 5.5.11 Start Section
     fn emit_start_sec(&mut self) -> io::Result<()> {
         todo!()
     }
 
-    // Element Section
+    // 5.5.12 Element Section
     fn emit_elem_sec(&mut self, elems: &Vec<Elem>) -> io::Result<()> {
         if elems.is_empty() {
             return Ok(());
         }
         self.emit_section(9, |e| {
-            e.write_u32(elems.len() as u32)?;
-            for elem in elems.iter() {
-                e.write_u32(elem.table.0)?;
-                e.emit_expr(&elem.offset)?;
-                e.write_u32(elem.init.len() as u32)?;
-                for func_idx in elem.init.iter() {
-                    e.write_u32(func_idx.0)?;
+            e.write_vec(elems, |e, elem| {
+                // Note:
+                // The initial integer can be interpreted as a bitfield. Bit 0 distinguishes a passive or declarative segment from
+                // an active segment, bit 1 indicates the presence of an explicit table index for an active segment and otherwise
+                // distinguishes passive from declarative segments, bit 2 indicates the use of element type and element expressions
+                // instead of element kind and element indices.
+
+                let mut bits = 0;
+
+                let can_use_elem_kind = matches!(elem.type_, RefType::FuncRef);
+
+                let can_use_elem_indices = 'can_use_elem_indices: {
+                    let mut indices = vec![];
+                    for expr in elem.init.iter() {
+                        match expr.0.as_slice() {
+                            [Instr::RefFunc(y)] => indices.push(y),
+                            _ => break 'can_use_elem_indices None,
+                        }
+                    }
+                    Some(indices)
+                };
+
+                let use_elem_kind_and_indices =
+                    if can_use_elem_kind && let Some(indices) = can_use_elem_indices {
+                        Some(indices)
+                    } else {
+                        bits |= 1 << 2;
+                        None
+                    };
+
+                match (&elem.type_, &elem.mode) {
+                    (
+                        RefType::FuncRef,
+                        ElemMode::Active {
+                            table: TableIdx(0),
+                            offset,
+                        },
+                    ) => {
+                        e.write_u32(bits)?;
+                        e.emit_expr(offset)?;
+                    }
+                    (et, ElemMode::Passive) => {
+                        bits |= 1 << 0;
+                        e.write_u32(bits)?;
+                        if use_elem_kind_and_indices.is_some() {
+                            e.write(&[0x00])?;
+                        } else {
+                            e.emit_ref_type(et)?;
+                        }
+                    }
+                    (et, ElemMode::Active { table, offset }) => {
+                        bits |= 1 << 1;
+                        e.write_u32(bits)?;
+                        e.write_u32(table.0)?;
+                        e.emit_expr(offset)?;
+                        if use_elem_kind_and_indices.is_some() {
+                            e.write(&[0x00])?;
+                        } else {
+                            e.emit_ref_type(et)?;
+                        }
+                    }
+                    (et, ElemMode::Declarative) => {
+                        bits |= 1 << 0;
+                        bits |= 1 << 1;
+                        e.write_u32(bits)?;
+                        if use_elem_kind_and_indices.is_some() {
+                            e.write(&[0x00])?;
+                        } else {
+                            e.emit_ref_type(et)?;
+                        }
+                    }
+                };
+
+                if let Some(indices) = &use_elem_kind_and_indices {
+                    e.write_vec(indices, |e, func_idx| {
+                        e.write_u32(func_idx.0)?;
+                        Ok(())
+                    })?;
+                } else {
+                    e.write_vec(&elem.init, |e, expr| {
+                        e.emit_expr(expr)?;
+                        Ok(())
+                    })?;
                 }
-            }
+
+                Ok(())
+            })?;
             Ok(())
         })
     }
 
-    // Code Section
+    // 5.5.13 Code Section
     fn emit_code_sec(&mut self, funcs: &Vec<Func>) -> io::Result<()> {
         if funcs.is_empty() {
             return Ok(());
         }
         self.emit_section(10, |e| {
-            e.write_u32(funcs.len() as u32)?;
-            for func in funcs.iter() {
+            e.write_vec(funcs, |e, func| {
                 e.write_sized(|e| {
                     let mut chunks = Vec::new();
                     for i in 0..func.locals.len() {
@@ -179,25 +257,29 @@ impl<W: io::Write> Emitter<W> {
                         }
                     }
 
-                    e.write_u32(chunks.len() as u32)?;
-                    for chunk in chunks.iter() {
+                    e.write_vec(&chunks, |e, chunk| {
                         e.write_u32(chunk.0)?;
                         e.emit_val_type(&func.locals[chunk.1])?;
-                    }
+                        Ok(())
+                    })?;
 
                     e.emit_expr(&func.body)?;
 
                     Ok(())
                 })?;
-            }
+                Ok(())
+            })?;
             Ok(())
         })
     }
 
-    // Data Section
+    // 5.5.14 Data Section
     fn emit_data_sec(&mut self) -> io::Result<()> {
         todo!()
     }
+
+    // 5.5.15 Data Count Section
+    // TODO
 
     // Modules
     pub fn emit_module(&mut self, module: &Module) -> io::Result<()> {
@@ -223,7 +305,9 @@ impl<W: io::Write> Emitter<W> {
 
         // start
 
-        self.emit_elem_sec(&module.elem)?;
+        self.emit_elem_sec(&module.elems)?;
+
+        // data count
 
         self.emit_code_sec(&module.funcs)?;
 

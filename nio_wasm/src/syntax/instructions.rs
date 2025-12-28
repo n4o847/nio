@@ -3,10 +3,10 @@ use super::types::*;
 
 // https://webassembly.github.io/spec/core/syntax/instructions.html
 
-// Instructions
+// 2.4 Instructions
 
 pub enum Instr {
-    // Numeric Instructions
+    // 2.4.1 Numeric Instructions
     // Constants
     I32Const(u32),
     I64Const(u64),
@@ -123,11 +123,11 @@ pub enum Instr {
     F64Ge,
 
     // Conversions
-    I32Extend8S,
-    I32Extend16S,
-    I64Extend8S,
-    I64Extend16S,
-    I64Extend32S,
+    I32Extend8S,  // Wasm 2.0 or later
+    I32Extend16S, // Wasm 2.0 or later
+    I64Extend8S,  // Wasm 2.0 or later
+    I64Extend16S, // Wasm 2.0 or later
+    I64Extend32S, // Wasm 2.0 or later
 
     I32WrapI64,
     I64ExtendI32U,
@@ -140,14 +140,14 @@ pub enum Instr {
     I64TruncF32S,
     I64TruncF64U,
     I64TruncF64S,
-    I32TruncSatF32U,
-    I32TruncSatF32S,
-    I32TruncSatF64U,
-    I32TruncSatF64S,
-    I64TruncSatF32U,
-    I64TruncSatF32S,
-    I64TruncSatF64U,
-    I64TruncSatF64S,
+    I32TruncSatF32U, // Wasm 2.0 or later
+    I32TruncSatF32S, // Wasm 2.0 or later
+    I32TruncSatF64U, // Wasm 2.0 or later
+    I32TruncSatF64S, // Wasm 2.0 or later
+    I64TruncSatF32U, // Wasm 2.0 or later
+    I64TruncSatF32S, // Wasm 2.0 or later
+    I64TruncSatF64U, // Wasm 2.0 or later
+    I64TruncSatF64S, // Wasm 2.0 or later
 
     F32DemoteF64,
     F64PromoteF32,
@@ -165,18 +165,29 @@ pub enum Instr {
     F32ReinterpretI32,
     F64ReinterpretI64,
 
-    // Parametric Instructions
-    Drop,
-    Select,
+    // 2.4.2 Vector Instructions
+    // TODO
 
-    // Variable Instructions
+    // 2.4.3 Reference Instructions
+    RefNull(RefType),
+    RefIsNull,
+    RefFunc(FuncIdx),
+
+    // 2.4.4 Parametric Instructions
+    Drop,
+    Select(Option<Vec<ValType>>),
+
+    // 2.4.5 Variable Instructions
     LocalGet(LocalIdx),
     LocalSet(LocalIdx),
     LocalTee(LocalIdx),
     GlobalGet(GlobalIdx),
     GlobalSet(GlobalIdx),
 
-    // Memory Instructions
+    // 2.4.6 Table Instructions
+    // TODO
+
+    // 2.4.7 Memory Instructions
     I32Load(MemArg),
     I64Load(MemArg),
     F32Load(MemArg),
@@ -204,8 +215,12 @@ pub enum Instr {
 
     MemorySize,
     MemoryGrow,
+    MemoryFill,          // Wasm 2.0 or later
+    MemoryCopy,          // Wasm 2.0 or later
+    MemoryInit(DataIdx), // Wasm 2.0 or later
+    DataDrop(DataIdx),   // Wasm 2.0 or later
 
-    // Control Instructions
+    // 2.4.8 Control Instructions
     Nop,
     Unreachable,
     Block(BlockType, Vec<Instr>),
@@ -216,7 +231,7 @@ pub enum Instr {
     BrTable(Vec<LabelIdx>, LabelIdx),
     Return,
     Call(FuncIdx),
-    CallIndirect(TypeIdx),
+    CallIndirect(TableIdx, TypeIdx),
 }
 
 pub struct MemArg {
@@ -229,6 +244,6 @@ pub enum BlockType {
     ValType(Option<ValType>),
 }
 
-// Expressions
+// 2.4.9 Expressions
 
 pub struct Expr(pub Vec<Instr>);
