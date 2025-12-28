@@ -30,6 +30,9 @@ impl<W: io::Write> Emitter<W> {
 
     // Type Section
     fn emit_type_sec(&mut self, types: &Vec<FuncType>) -> io::Result<()> {
+        if types.is_empty() {
+            return Ok(());
+        }
         self.emit_section(1, |e| {
             e.write_u32(types.len() as u32)?;
             for func_type in types.iter() {
@@ -41,6 +44,9 @@ impl<W: io::Write> Emitter<W> {
 
     // Import Section
     fn emit_import_sec(&mut self, imports: &Vec<Import>) -> io::Result<()> {
+        if imports.is_empty() {
+            return Ok(());
+        }
         self.emit_section(2, |e| {
             e.write_u32(imports.len() as u32)?;
             for import in imports.iter() {
@@ -62,6 +68,9 @@ impl<W: io::Write> Emitter<W> {
 
     // Function Section
     fn emit_func_sec(&mut self, funcs: &Vec<Func>) -> io::Result<()> {
+        if funcs.is_empty() {
+            return Ok(());
+        }
         self.emit_section(3, |e| {
             e.write_u32(funcs.len() as u32)?;
             for func in funcs.iter() {
@@ -72,22 +81,34 @@ impl<W: io::Write> Emitter<W> {
     }
 
     // Table Section
-    fn emit_table_sec(&mut self) -> io::Result<()> {
-        Ok(())
+    fn emit_table_sec(&mut self, tables: &Vec<Table>) -> io::Result<()> {
+        if tables.is_empty() {
+            return Ok(());
+        }
+        self.emit_section(4, |e| {
+            e.write_u32(tables.len() as u32)?;
+            for table in tables.iter() {
+                e.emit_table_type(&table.r#type)?;
+            }
+            Ok(())
+        })
     }
 
     // Memory Section
     fn emit_mem_sec(&mut self) -> io::Result<()> {
-        Ok(())
+        todo!()
     }
 
     // Global Section
     fn emit_global_sec(&mut self) -> io::Result<()> {
-        Ok(())
+        todo!()
     }
 
     // Export Section
     fn emit_export_sec(&mut self, exports: &Vec<Export>) -> io::Result<()> {
+        if exports.is_empty() {
+            return Ok(());
+        }
         self.emit_section(7, |e| {
             e.write_u32(exports.len() as u32)?;
             for export in exports.iter() {
@@ -118,16 +139,33 @@ impl<W: io::Write> Emitter<W> {
 
     // Start Section
     fn emit_start_sec(&mut self) -> io::Result<()> {
-        Ok(())
+        todo!()
     }
 
     // Element Section
-    fn emit_elem_sec(&mut self) -> io::Result<()> {
-        Ok(())
+    fn emit_elem_sec(&mut self, elems: &Vec<Elem>) -> io::Result<()> {
+        if elems.is_empty() {
+            return Ok(());
+        }
+        self.emit_section(9, |e| {
+            e.write_u32(elems.len() as u32)?;
+            for elem in elems.iter() {
+                e.write_u32(elem.table.0)?;
+                e.emit_expr(&elem.offset)?;
+                e.write_u32(elem.init.len() as u32)?;
+                for func_idx in elem.init.iter() {
+                    e.write_u32(func_idx.0)?;
+                }
+            }
+            Ok(())
+        })
     }
 
     // Code Section
     fn emit_code_sec(&mut self, funcs: &Vec<Func>) -> io::Result<()> {
+        if funcs.is_empty() {
+            return Ok(());
+        }
         self.emit_section(10, |e| {
             e.write_u32(funcs.len() as u32)?;
             for func in funcs.iter() {
@@ -158,7 +196,7 @@ impl<W: io::Write> Emitter<W> {
 
     // Data Section
     fn emit_data_sec(&mut self) -> io::Result<()> {
-        Ok(())
+        todo!()
     }
 
     // Modules
@@ -169,29 +207,27 @@ impl<W: io::Write> Emitter<W> {
         let version = [0x01, 0x00, 0x00, 0x00];
         self.write(&version)?;
 
-        // Types Section
-        if !module.types.is_empty() {
-            self.emit_type_sec(&module.types)?;
-        }
+        self.emit_type_sec(&module.types)?;
 
-        if !module.imports.is_empty() {
-            self.emit_import_sec(&module.imports)?;
-        }
+        self.emit_import_sec(&module.imports)?;
 
-        // Function Section
-        if !module.funcs.is_empty() {
-            self.emit_func_sec(&module.funcs)?;
-        }
+        self.emit_func_sec(&module.funcs)?;
 
-        // Export Section
-        if !module.exports.is_empty() {
-            self.emit_export_sec(&module.exports)?;
-        }
+        self.emit_table_sec(&module.tables)?;
 
-        // Code Section
-        if !module.funcs.is_empty() {
-            self.emit_code_sec(&module.funcs)?;
-        }
+        // mem
+
+        // global
+
+        self.emit_export_sec(&module.exports)?;
+
+        // start
+
+        self.emit_elem_sec(&module.elem)?;
+
+        self.emit_code_sec(&module.funcs)?;
+
+        // data
 
         Ok(())
     }

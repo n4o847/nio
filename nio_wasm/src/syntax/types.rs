@@ -33,7 +33,9 @@ pub struct MemType(pub Limits);
 
 pub struct TableType(pub Limits, pub ElemType);
 
-pub struct ElemType;
+pub enum ElemType {
+    FuncRef,
+}
 
 // Global Types
 

@@ -64,7 +64,7 @@ impl<W: io::Write> Emitter<W> {
             BrTable(ls, l) => todo!(),
             Return => bin![0x0f],
             Call(x) => bin![0x10, u32(x.0)],
-            CallIndirect(x) => todo!(),
+            CallIndirect(x) => bin![0x11, u32(x.0), 0x00],
 
             // Parametric Instructions
             Drop => bin![0x1a],
