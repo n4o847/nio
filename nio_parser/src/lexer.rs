@@ -2,7 +2,8 @@ use std::str::Chars;
 
 use thiserror::Error;
 
-use crate::{Location, token::Token};
+use crate::Location;
+use crate::token::Token;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum LexicalError {

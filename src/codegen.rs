@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 
-use std::{cell::RefCell, collections::HashMap, num::ParseIntError, rc::Rc};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::num::ParseIntError;
+use std::rc::Rc;
 
 use nio_wasm as wasm;
 use thiserror::Error;

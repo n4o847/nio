@@ -1,9 +1,8 @@
+use std::fs::{self, File};
+use std::io::{self, Read};
+
 use clap::{Parser, Subcommand};
 use nio::{compiler, parser};
-use std::{
-    fs::{self, File},
-    io::{self, Read},
-};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

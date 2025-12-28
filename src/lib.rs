@@ -4,5 +4,4 @@ pub mod compiler;
 pub mod ir;
 pub mod typecheck;
 
-pub use nio_parser as parser;
-pub use nio_wasm as wasm;
+pub use {nio_parser as parser, nio_wasm as wasm};

@@ -1,10 +1,8 @@
 #![cfg(feature = "test_node")]
 
-use std::{
-    error,
-    io::Write,
-    process::{Command, Stdio},
-};
+use std::error;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 use indoc::indoc;
 

@@ -1,5 +1,6 @@
-use crate::ir::*;
 use std::{error, fmt};
+
+use crate::ir::*;
 
 #[derive(Debug)]
 pub struct TypeError;
