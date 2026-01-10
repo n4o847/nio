@@ -5,9 +5,9 @@ use super::*;
 // 5.1 Conventions
 
 impl<W: io::Write> Emitter<W> {
-    // 5.1.3 Vectors
+    // 5.1.3 Lists
 
-    pub fn write_vec<T, F>(&mut self, vec: &[T], mut f: F) -> io::Result<()>
+    pub fn write_list<T, F>(&mut self, vec: &[T], mut f: F) -> io::Result<()>
     where
         F: FnMut(&mut Emitter<W>, &T) -> io::Result<()>,
     {

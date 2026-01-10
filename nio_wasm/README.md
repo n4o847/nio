@@ -2,7 +2,7 @@
 
 A library for constructing and emitting WebAssembly modules.
 
-Currently supports basic features of WebAssembly 2.0.
+Currently supports basic features of WebAssembly 3.0 (2025-12-08).
 
 ## Specifications
 
@@ -18,5 +18,6 @@ The specifications are available at https://webassembly.org/specs/.
   * Browser: https://webassembly.github.io/spec/core/
   * W3C: https://webassembly.github.io/spec/core/bikeshed/
   * PDF: https://webassembly.github.io/spec/versions/core/WebAssembly-3.0-draft.pdf
+  * PDF: https://webassembly.github.io/spec/core/_download/WebAssembly.pdf
 * Features
   * https://webassembly.org/features/

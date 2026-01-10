@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::rc::Rc;
 
@@ -73,15 +72,11 @@ impl<'a> Context<'a> {
     }
 }
 
-pub struct CodeGenerator {
-    func_type_map: HashMap<wasm::FuncType, usize>,
-}
+pub struct CodeGenerator {}
 
 impl CodeGenerator {
     fn new() -> Self {
-        Self {
-            func_type_map: HashMap::new(),
-        }
+        Self {}
     }
 
     pub fn generate(program: &ir::Program) -> Result<wasm::Module, CodegenError> {
@@ -111,23 +106,23 @@ impl CodeGenerator {
         ctx: &'a Context<'a>,
         module: &mut wasm::Module,
     ) -> Result<(), CodegenError> {
-        let r#type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
-        let type_idx = wasm::TypeIdx(module.types.len() as u32);
-        module.types.push(r#type);
-        let mut start_func = wasm::Func {
-            type_: type_idx,
-            locals: vec![],
-            body: wasm::Expr(vec![]),
-        };
+        let type_ = wasm::Type(wasm::RecType(vec![wasm::SubType(
+            Some(wasm::Final),
+            vec![],
+            wasm::CompType::Func(wasm::ResultType(vec![]), wasm::ResultType(vec![])),
+        )]));
+        let type_idx = wasm::TypeIdx(module.types().len() as u32);
+        module.types_mut().push(type_);
+        let mut start_func = wasm::Func(type_idx, vec![], wasm::Expr(vec![]));
         for stmt in program.statements.iter() {
             self.generate_stmt(stmt, &ctx, module, &mut start_func)?;
         }
         let func_idx = new_func_idx(module);
-        module.funcs.push(start_func);
-        module.exports.push(wasm::Export {
-            name: wasm::Name("_start".to_string()),
-            desc: wasm::ExportDesc::Func(func_idx),
-        });
+        module.funcs_mut().push(start_func);
+        module.exports_mut().push(wasm::Export(
+            wasm::Name("_start".to_string()),
+            wasm::ExternIdx::Func(func_idx),
+        ));
         Ok(())
     }
 
@@ -156,19 +151,19 @@ impl CodeGenerator {
                                         ir::Expr::StringLit(import_module),
                                         ir::Expr::StringLit(import_name),
                                     ] => {
-                                        let r#type = to_wasm_func_type(params, return_type);
-                                        let type_idx = wasm::TypeIdx(module.types.len() as u32);
-                                        module.types.push(r#type);
+                                        let type_ = to_wasm_func_type(params, return_type);
+                                        let type_idx = wasm::TypeIdx(module.types().len() as u32);
+                                        module.types_mut().push(type_);
                                         let func_idx = new_func_idx(module);
                                         ctx.0.as_ref().borrow_mut().funcs.push(Func {
                                             name,
                                             index: func_idx,
                                         });
-                                        module.imports.push(wasm::Import {
-                                            module: wasm::Name(import_module.to_string()),
-                                            name: wasm::Name(import_name.to_string()),
-                                            desc: wasm::ImportDesc::Func(type_idx),
-                                        });
+                                        module.imports_mut().push(wasm::Import(
+                                            wasm::Name(import_module.to_string()),
+                                            wasm::Name(import_name.to_string()),
+                                            wasm::ExternType::Func(wasm::TypeUse(type_idx)),
+                                        ));
                                         if body.is_some() {
                                             return Err(
                                                 CodegenError::RedundantFunctionDefinition {
@@ -223,10 +218,10 @@ impl CodeGenerator {
                                     }
                                     "export" => match args.as_slice() {
                                         [ir::Expr::StringLit(export_name)] => {
-                                            module.exports.push(wasm::Export {
-                                                name: wasm::Name(export_name.to_string()),
-                                                desc: wasm::ExportDesc::Func(func_idx.clone()),
-                                            });
+                                            module.exports_mut().push(wasm::Export(
+                                                wasm::Name(export_name.to_string()),
+                                                wasm::ExternIdx::Func(func_idx.clone()),
+                                            ));
                                         }
                                         _ => todo!("Invalid form of export annotation: {:?}", args),
                                     },
@@ -239,9 +234,9 @@ impl CodeGenerator {
                     }
                     _ => todo!("Multiple annotations not supported"),
                 }
-                let r#type = to_wasm_func_type(params, return_type);
-                let type_idx = wasm::TypeIdx(module.types.len() as u32);
-                module.types.push(r#type);
+                let type_ = to_wasm_func_type(params, return_type);
+                let type_idx = wasm::TypeIdx(module.types().len() as u32);
+                module.types_mut().push(type_);
                 ctx.0.as_ref().borrow_mut().funcs.push(Func {
                     name,
                     index: func_idx,
@@ -261,26 +256,25 @@ impl CodeGenerator {
                 }
                 let mut instructions = vec![];
                 self.generate_expr(body, &mut ctx, &mut instructions)?;
-                module.funcs.push(wasm::Func {
-                    type_: type_idx,
-                    locals,
-                    body: wasm::Expr(instructions),
-                });
+                module
+                    .funcs_mut()
+                    .push(wasm::Func(type_idx, locals, wasm::Expr(instructions)));
             }
             ir::Stmt::Let { name, type_, value } => {
-                self.generate_expr(value, ctx, &mut func.body.0)?;
-                func.locals.push(wasm::ValType::NumType(wasm::NumType::I32));
+                self.generate_expr(value, ctx, &mut func.2.0)?;
+                func.1
+                    .push(wasm::Local(wasm::ValType::NumType(wasm::NumType::I32)));
                 let local_idx = wasm::LocalIdx(ctx.0.as_ref().borrow().locals.len() as u32);
                 ctx.0
                     .as_ref()
                     .borrow_mut()
                     .locals
                     .push(Local { name, type_ });
-                func.body.0.push(wasm::Instr::LocalSet(local_idx));
+                func.2.0.push(wasm::Instr::LocalSet(local_idx));
             }
             ir::Stmt::Expr(expr) => {
                 let mut ctx = ctx.inherit();
-                self.generate_expr(expr, &mut ctx, &mut func.body.0)?;
+                self.generate_expr(expr, &mut ctx, &mut func.2.0)?;
                 todo!();
             }
         }
@@ -354,8 +348,8 @@ impl CodeGenerator {
     }
 }
 
-fn to_wasm_func_type(params: &Vec<(String, ir::Type)>, return_type: &ir::Type) -> wasm::FuncType {
-    let mut func_type = wasm::FuncType(wasm::ResultType(vec![]), wasm::ResultType(vec![]));
+fn to_wasm_func_type(params: &Vec<(String, ir::Type)>, return_type: &ir::Type) -> wasm::Type {
+    let mut func_type = (wasm::ResultType(vec![]), wasm::ResultType(vec![]));
     for (_, param_type) in params.iter() {
         match param_type {
             ir::Type::Int => func_type
@@ -372,7 +366,11 @@ fn to_wasm_func_type(params: &Vec<(String, ir::Type)>, return_type: &ir::Type) -
             .push(wasm::ValType::NumType(wasm::NumType::I32)),
         _ => todo!(),
     }
-    func_type
+    wasm::Type(wasm::RecType(vec![wasm::SubType(
+        Some(wasm::Final),
+        vec![],
+        wasm::CompType::Func(func_type.0, func_type.1),
+    )]))
 }
 
 fn new_func_idx(module: &wasm::Module) -> wasm::FuncIdx {
@@ -382,10 +380,50 @@ fn new_func_idx(module: &wasm::Module) -> wasm::FuncIdx {
     // > definitions in the same index space.
     wasm::FuncIdx(
         (module
-            .imports
+            .imports()
             .iter()
-            .filter(|i| matches!(i.desc, wasm::ImportDesc::Func(_)))
+            .filter(|wasm::Import(_, _, xt)| matches!(xt, wasm::ExternType::Func(_)))
             .count()
-            + module.funcs.len()) as u32,
+            + module.funcs().len()) as u32,
     )
+}
+
+trait ModuleExt {
+    fn types(&self) -> &Vec<wasm::Type>;
+    fn types_mut(&mut self) -> &mut Vec<wasm::Type>;
+    fn imports(&self) -> &Vec<wasm::Import>;
+    fn imports_mut(&mut self) -> &mut Vec<wasm::Import>;
+    fn funcs(&self) -> &Vec<wasm::Func>;
+    fn funcs_mut(&mut self) -> &mut Vec<wasm::Func>;
+    fn exports_mut(&mut self) -> &mut Vec<wasm::Export>;
+}
+
+impl ModuleExt for wasm::Module {
+    fn types(&self) -> &Vec<nio_wasm::Type> {
+        &self.0
+    }
+
+    fn types_mut(&mut self) -> &mut Vec<nio_wasm::Type> {
+        &mut self.0
+    }
+
+    fn imports(&self) -> &Vec<nio_wasm::Import> {
+        &self.1
+    }
+
+    fn imports_mut(&mut self) -> &mut Vec<nio_wasm::Import> {
+        &mut self.1
+    }
+
+    fn funcs(&self) -> &Vec<nio_wasm::Func> {
+        &self.6
+    }
+
+    fn funcs_mut(&mut self) -> &mut Vec<nio_wasm::Func> {
+        &mut self.6
+    }
+
+    fn exports_mut(&mut self) -> &mut Vec<nio_wasm::Export> {
+        &mut self.10
+    }
 }

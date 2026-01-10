@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::super::syntax::*;
 use super::*;
 
@@ -23,9 +25,38 @@ impl<W: io::Write> Emitter<W> {
         Ok(())
     }
 
+    pub fn write_u64(&mut self, mut value: u64) -> io::Result<()> {
+        loop {
+            if value < (1 << 7) {
+                self.write(&[value as u8])?;
+                break;
+            } else {
+                self.write(&[value as u8 | (1 << 7)])?;
+                value >>= 7;
+            }
+        }
+        Ok(())
+    }
+
     // Signed Integers
 
     pub fn write_s32(&mut self, mut value: i32) -> io::Result<()> {
+        loop {
+            if 0 <= value && value < (1 << 6) {
+                self.write(&[value as u8])?;
+                break;
+            } else if (-1 << 6) <= value && value < 0 {
+                self.write(&[value as u8 & !(1 << 7)])?;
+                break;
+            } else {
+                self.write(&[value as u8 | (1 << 7)])?;
+                value >>= 7;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn write_s33(&mut self, mut value: i64) -> io::Result<()> {
         loop {
             if 0 <= value && value < (1 << 6) {
                 self.write(&[value as u8])?;

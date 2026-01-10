@@ -13,8 +13,8 @@ macro_rules! bin {
             bin![$e; $($t)*];
         )?
     };
-    ($e:ident; i32($x:expr) $(, $($t:tt)*)?) => {
-        $e.write_i32($x)?;
+    ($e:ident; u64($x:expr) $(, $($t:tt)*)?) => {
+        $e.write_u64($x)?;
         $(
             bin![$e; $($t)*];
         )?
@@ -60,73 +60,117 @@ impl<W: io::Write> Emitter<W> {
         use Instr::*;
 
         let buffer = match instr {
-            // 5.4.1 Control Instructions
+            // 5.4.1 Parametric Instructions
             Unreachable => bin![0x00],
             Nop => bin![0x01],
-            Block(b, i) => todo!(),
-            Loop(b, i) => todo!(),
-            IfElse(b, i1, i2) => todo!(),
-            Br(l) => todo!(),
-            BrIf(l) => todo!(),
-            BrTable(ls, l) => todo!(),
-            Return => bin![0x0f],
-            Call(x) => bin![0x10, u32(x.0)],
-            CallIndirect(x, y) => bin![0x11, u32(y.0), u32(x.0)],
-
-            // 5.4.2 Reference Instructions
-            RefNull(t) => bin![0xd0, emit_ref_type(t),],
-            RefIsNull => bin![0xd1],
-            RefFunc(x) => bin![0xd2, u32(x.0)],
-
-            // 5.4.3 Parametric Instructions
             Drop => bin![0x1a],
             Select(None) => bin![0x1b],
-            Select(Some(t)) => bin![0x1c, write_vec(t, |e, val_type| e.emit_val_type(val_type))],
+            Select(Some(t)) => bin![0x1c, write_list(t, |e, val_type| e.emit_val_type(val_type))],
 
-            // 5.4.4 Variable Instructions
+            // 5.4.2 Control Instructions
+            Block(bt, in_) => todo!(),
+            Loop(bt, in_) => todo!(),
+            IfElse(bt, in1, in2) => todo!(),
+            Throw(x) => todo!(),
+            ThrowRef => todo!(),
+            Br(l) => todo!(),
+            BrIf(l) => todo!(),
+            BrTable(l, ln) => todo!(),
+            Return => bin![0x0f],
+            Call(x) => bin![0x10, u32(x.0)],
+            CallIndirect(x, TypeUse(y)) => bin![0x11, u32(y.0), u32(x.0)],
+            ReturnCall(x) => todo!(),
+            ReturnCallIndirect(x, y) => todo!(),
+            CallRef(x) => todo!(),
+            ReturnCallRef(y) => todo!(),
+            TryTable(bt, c, in_) => todo!(),
+            BrOnNull(l) => todo!(),
+            BrOnNonNull(l) => todo!(),
+            BrOnCast(l, RefType(null1, ht1), RefType(null2, ht2)) => todo!(),
+            BrOnCastFail(l, RefType(null1, ht1), RefType(null2, ht2)) => todo!(),
+
+            // 5.4.3 Variable Instructions
             LocalGet(x) => bin![0x20, u32(x.0)],
             LocalSet(x) => bin![0x21, u32(x.0)],
             LocalTee(x) => bin![0x22, u32(x.0)],
             GlobalGet(x) => bin![0x23, u32(x.0)],
             GlobalSet(x) => bin![0x24, u32(x.0)],
 
-            // 5.4.5 Table Instructions
+            // 5.4.4 Table Instructions
             // TODO
 
-            // 5.4.6 Memory Instructions
-            I32Load(m) => bin![0x28, u32(m.align), u32(m.offset)],
-            I64Load(m) => bin![0x29, u32(m.align), u32(m.offset)],
-            F32Load(m) => bin![0x2a, u32(m.align), u32(m.offset)],
-            F64Load(m) => bin![0x2b, u32(m.align), u32(m.offset)],
-            I32Load8S(m) => bin![0x2c, u32(m.align), u32(m.offset)],
-            I32Load8U(m) => bin![0x2d, u32(m.align), u32(m.offset)],
-            I32Load16S(m) => bin![0x2e, u32(m.align), u32(m.offset)],
-            I32Load16U(m) => bin![0x2f, u32(m.align), u32(m.offset)],
-            I64Load8S(m) => bin![0x30, u32(m.align), u32(m.offset)],
-            I64Load8U(m) => bin![0x31, u32(m.align), u32(m.offset)],
-            I64Load16S(m) => bin![0x32, u32(m.align), u32(m.offset)],
-            I64Load16U(m) => bin![0x33, u32(m.align), u32(m.offset)],
-            I64Load32S(m) => bin![0x34, u32(m.align), u32(m.offset)],
-            I64Load32U(m) => bin![0x35, u32(m.align), u32(m.offset)],
-            I32Store(m) => bin![0x36, u32(m.align), u32(m.offset)],
-            I64Store(m) => bin![0x37, u32(m.align), u32(m.offset)],
-            F32Store(m) => bin![0x38, u32(m.align), u32(m.offset)],
-            F64Store(m) => bin![0x39, u32(m.align), u32(m.offset)],
-            I32Store8(m) => bin![0x3a, u32(m.align), u32(m.offset)],
-            I32Store16(m) => bin![0x3b, u32(m.align), u32(m.offset)],
-            I64Store8(m) => bin![0x3c, u32(m.align), u32(m.offset)],
-            I64Store16(m) => bin![0x3d, u32(m.align), u32(m.offset)],
-            I64Store32(m) => bin![0x3e, u32(m.align), u32(m.offset)],
-            MemorySize => bin![0x3f, 0x00],
-            MemoryGrow => bin![0x40, 0x00],
-            MemoryInit(x) => bin![0xfc, u32(8), u32(x.0), 0x00],
+            // 5.4.5 Memory Instructions
+            I32Load(x, a0) => bin![0x28, emit_mem_arg(x, a0)],
+            I64Load(x, a0) => bin![0x29, emit_mem_arg(x, a0)],
+            F32Load(x, a0) => bin![0x2a, emit_mem_arg(x, a0)],
+            F64Load(x, a0) => bin![0x2b, emit_mem_arg(x, a0)],
+            I32Load8S(x, a0) => bin![0x2c, emit_mem_arg(x, a0)],
+            I32Load8U(x, a0) => bin![0x2d, emit_mem_arg(x, a0)],
+            I32Load16S(x, a0) => bin![0x2e, emit_mem_arg(x, a0)],
+            I32Load16U(x, a0) => bin![0x2f, emit_mem_arg(x, a0)],
+            I64Load8S(x, a0) => bin![0x30, emit_mem_arg(x, a0)],
+            I64Load8U(x, a0) => bin![0x31, emit_mem_arg(x, a0)],
+            I64Load16S(x, a0) => bin![0x32, emit_mem_arg(x, a0)],
+            I64Load16U(x, a0) => bin![0x33, emit_mem_arg(x, a0)],
+            I64Load32S(x, a0) => bin![0x34, emit_mem_arg(x, a0)],
+            I64Load32U(x, a0) => bin![0x35, emit_mem_arg(x, a0)],
+            I32Store(x, a0) => bin![0x36, emit_mem_arg(x, a0)],
+            I64Store(x, a0) => bin![0x37, emit_mem_arg(x, a0)],
+            F32Store(x, a0) => bin![0x38, emit_mem_arg(x, a0)],
+            F64Store(x, a0) => bin![0x39, emit_mem_arg(x, a0)],
+            I32Store8(x, a0) => bin![0x3a, emit_mem_arg(x, a0)],
+            I32Store16(x, a0) => bin![0x3b, emit_mem_arg(x, a0)],
+            I64Store8(x, a0) => bin![0x3c, emit_mem_arg(x, a0)],
+            I64Store16(x, a0) => bin![0x3d, emit_mem_arg(x, a0)],
+            I64Store32(x, a0) => bin![0x3e, emit_mem_arg(x, a0)],
+            MemorySize(x) => bin![0x3f, u32(x.0)],
+            MemoryGrow(x) => bin![0x40, u32(x.0)],
+            MemoryInit(x, y) => bin![0xfc, u32(8), u32(y.0), u32(x.0)],
             DataDrop(x) => bin![0xfc, u32(9), u32(x.0)],
-            MemoryCopy => bin![0xfc, u32(10), 0x00, 0x00],
-            MemoryFill => bin![0xfc, u32(11), 0x00],
+            MemoryCopy(x1, x2) => bin![0xfc, u32(10), u32(x1.0), u32(x2.0)],
+            MemoryFill(x) => bin![0xfc, u32(11), u32(x.0)],
 
-            // 5.4.7 Numeric Instructions
-            I32Const(n) => bin![0x41, i32(*n)],
-            I64Const(n) => todo!(),
+            // 5.4.2 Reference Instructions
+            RefNull(ht) => bin![0xd0, emit_heap_type(ht)],
+            RefIsNull => bin![0xd1],
+            RefFunc(x) => bin![0xd2, u32(x.0)],
+            RefEq => bin![0xd3],
+            RefAsNonNull => bin![0xd4],
+            RefTest(RefType(None, ht)) => bin![0xfb, u32(20), emit_heap_type(ht)],
+            RefTest(RefType(Some(Null), ht)) => bin![0xfb, u32(21), emit_heap_type(ht)],
+            RefCast(RefType(None, ht)) => bin![0xfb, u32(22), emit_heap_type(ht)],
+            RefCast(RefType(Some(Null), ht)) => bin![0xfb, u32(23), emit_heap_type(ht)],
+
+            // 5.4.7 Aggregate Instructions
+            StructNew(x) => bin![0xfb, u32(0), u32(x.0)],
+            StructNewDefault(x) => bin![0xfb, u32(1), u32(x.0)],
+            StructGet(x, i) => bin![0xfb, u32(2), u32(x.0), u32(*i)],
+            StructGetS(x, i) => bin![0xfb, u32(3), u32(x.0), u32(*i)],
+            StructGetU(x, i) => bin![0xfb, u32(4), u32(x.0), u32(*i)],
+            StructSet(x, i) => bin![0xfb, u32(5), u32(x.0), u32(*i)],
+            ArrayNew(x) => bin![0xfb, u32(6), u32(x.0)],
+            ArrayNewDefault(x) => bin![0xfb, u32(7), u32(x.0)],
+            ArrayNewFixed(x, n) => bin![0xfb, u32(8), u32(x.0), u32(*n)],
+            ArrayNewData(x, y) => bin![0xfb, u32(9), u32(x.0), u32(y.0)],
+            ArrayNewElem(x, y) => bin![0xfb, u32(10), u32(x.0), u32(y.0)],
+            ArrayGet(x) => bin![0xfb, u32(11), u32(x.0)],
+            ArrayGetS(x) => bin![0xfb, u32(12), u32(x.0)],
+            ArrayGetU(x) => bin![0xfb, u32(13), u32(x.0)],
+            ArraySet(x) => bin![0xfb, u32(14), u32(x.0)],
+            ArrayLen => bin![0xfb, u32(15)],
+            ArrayFill(x) => bin![0xfb, u32(16), u32(x.0)],
+            ArrayCopy(x1, x2) => bin![0xfb, u32(17), u32(x1.0), u32(x2.0)],
+            ArrayInitData(x, y) => bin![0xfb, u32(18), u32(x.0), u32(y.0)],
+            ArrayInitElem(x, y) => bin![0xfb, u32(19), u32(x.0), u32(y.0)],
+            AnyConvertExtern => bin![0xfb, u32(26)],
+            ExternConvertAny => bin![0xfb, u32(27)],
+            RefI31 => bin![0xfb, u32(28)],
+            I31GetS => bin![0xfb, u32(29)],
+            I31GetU => bin![0xfb, u32(30)],
+
+            // 5.4.8 Numeric Instructions
+            I32Const(n) => bin![0x41, u32(*n)],
+            I64Const(n) => bin![0x42, u64(*n)],
             F32Const(z) => bin![0x43, f32(*z)],
             F64Const(z) => bin![0x44, f64(*z)],
 
@@ -276,11 +320,38 @@ impl<W: io::Write> Emitter<W> {
             I64TruncSatF32U => bin![0xfc, u32(5)],
             I64TruncSatF64S => bin![0xfc, u32(6)],
             I64TruncSatF64U => bin![0xfc, u32(7)],
-            // 5.4.8 Vector Instructions
+            // 5.4.9 Vector Instructions
             // TODO
         };
 
         self.write(&buffer)?;
+
+        Ok(())
+    }
+
+    fn emit_mem_arg(&mut self, mem_idx: &MemIdx, mem_arg: &MemArg) -> io::Result<()> {
+        match (mem_idx, mem_arg) {
+            (
+                MemIdx(0),
+                &MemArg {
+                    align: n,
+                    offset: m,
+                },
+            ) => {
+                self.write_u32(n)?;
+                self.write_u64(m)?;
+            }
+            (
+                MemIdx(x),
+                &MemArg {
+                    align: n,
+                    offset: m,
+                },
+            ) => {
+                self.write_u32(n + (1 << 6))?;
+                self.write_u64(m)?;
+            }
+        }
 
         Ok(())
     }
