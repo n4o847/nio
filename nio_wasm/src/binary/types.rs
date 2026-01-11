@@ -11,12 +11,11 @@ use crate::binary::values::{S33, U64};
 impl Binary for NumType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            NumType::F64 => b.emit(0x7C)?,
-            NumType::F32 => b.emit(0x7D)?,
-            NumType::I64 => b.emit(0x7E)?,
-            NumType::I32 => b.emit(0x7F)?,
+            NumType::F64 => emit!(b, 0x7C),
+            NumType::F32 => emit!(b, 0x7D),
+            NumType::I64 => emit!(b, 0x7E),
+            NumType::I32 => emit!(b, 0x7F),
         }
-        Ok(())
     }
 }
 
@@ -25,9 +24,8 @@ impl Binary for NumType {
 impl Binary for VecType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            VecType::V128 => b.emit(0x7B)?,
+            VecType::V128 => emit!(b, 0x7B),
         }
-        Ok(())
     }
 }
 
@@ -36,30 +34,32 @@ impl Binary for VecType {
 impl Binary for AbsHeapType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            AbsHeapType::Exn => b.emit(0x69)?,
-            AbsHeapType::Array => b.emit(0x6A)?,
-            AbsHeapType::Struct => b.emit(0x6B)?,
-            AbsHeapType::I31 => b.emit(0x6C)?,
-            AbsHeapType::Eq => b.emit(0x6D)?,
-            AbsHeapType::Any => b.emit(0x6E)?,
-            AbsHeapType::Extern => b.emit(0x6F)?,
-            AbsHeapType::Func => b.emit(0x70)?,
-            AbsHeapType::None => b.emit(0x71)?,
-            AbsHeapType::NoExtern => b.emit(0x72)?,
-            AbsHeapType::NoFunc => b.emit(0x73)?,
-            AbsHeapType::NoExn => b.emit(0x74)?,
+            AbsHeapType::Exn => emit!(b, 0x69),
+            AbsHeapType::Array => emit!(b, 0x6A),
+            AbsHeapType::Struct => emit!(b, 0x6B),
+            AbsHeapType::I31 => emit!(b, 0x6C),
+            AbsHeapType::Eq => emit!(b, 0x6D),
+            AbsHeapType::Any => emit!(b, 0x6E),
+            AbsHeapType::Extern => emit!(b, 0x6F),
+            AbsHeapType::Func => emit!(b, 0x70),
+            AbsHeapType::None => emit!(b, 0x71),
+            AbsHeapType::NoExtern => emit!(b, 0x72),
+            AbsHeapType::NoFunc => emit!(b, 0x73),
+            AbsHeapType::NoExn => emit!(b, 0x74),
         }
-        Ok(())
     }
 }
 
 impl Binary for HeapType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            HeapType::AbsHeapType(ht) => b.emit(ht)?,
-            HeapType::TypeIdx(x) => b.emit(S33(x.0 as i64))?,
+            HeapType::AbsHeapType(ht) => {
+                emit!(b, ht)
+            }
+            HeapType::TypeIdx(x) => {
+                emit!(b, S33(x.0 as i64))
+            }
         }
-        Ok(())
     }
 }
 
@@ -69,18 +69,15 @@ impl Binary for RefType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
             RefType(Some(Null), HeapType::AbsHeapType(ht)) => {
-                b.emit(ht)?;
+                emit!(b, ht)
             }
             RefType(Some(Null), ht) => {
-                b.emit(0x63)?;
-                b.emit(ht)?;
+                emit!(b, 0x63, ht)
             }
             RefType(None, ht) => {
-                b.emit(0x64)?;
-                b.emit(ht)?;
+                emit!(b, 0x64, ht)
             }
         }
-        Ok(())
     }
 }
 
@@ -89,11 +86,10 @@ impl Binary for RefType {
 impl Binary for ValType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            ValType::NumType(nt) => b.emit(nt)?,
-            ValType::VecType(vt) => b.emit(vt)?,
-            ValType::RefType(rt) => b.emit(rt)?,
+            ValType::NumType(nt) => emit!(b, nt),
+            ValType::VecType(vt) => emit!(b, vt),
+            ValType::RefType(rt) => emit!(b, rt),
         }
-        Ok(())
     }
 }
 
@@ -102,9 +98,8 @@ impl Binary for ValType {
 impl Binary for ResultType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            ResultType(t) => b.emit(t)?,
+            ResultType(t) => emit!(b, t),
         }
-        Ok(())
     }
 }
 
@@ -113,10 +108,9 @@ impl Binary for ResultType {
 impl Binary for Option<Mut> {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            None => b.emit(0x00)?,
-            Some(Mut) => b.emit(0x01)?,
+            None => emit!(b, 0x00),
+            Some(Mut) => emit!(b, 0x01),
         }
-        Ok(())
     }
 }
 
@@ -124,20 +118,15 @@ impl Binary for CompType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
             CompType::Array(ft) => {
-                b.emit(0x5E)?;
-                b.emit(ft)?;
+                emit!(b, 0x5E, ft)
             }
             CompType::Struct(ft) => {
-                b.emit(0x5F)?;
-                b.emit(ft)?;
+                emit!(b, 0x5F, ft)
             }
             CompType::Func(t1, t2) => {
-                b.emit(0x60)?;
-                b.emit(t1)?;
-                b.emit(t2)?;
+                emit!(b, 0x60, t1, t2)
             }
         }
-        Ok(())
     }
 }
 
@@ -145,31 +134,27 @@ impl Binary for FieldType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
             FieldType(mut_, zt) => {
-                b.emit(zt)?;
-                b.emit(mut_)?;
+                emit!(b, zt, mut_)
             }
         }
-        Ok(())
     }
 }
 
 impl Binary for StorageType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            StorageType::ValType(t) => b.emit(t)?,
-            StorageType::PackType(pt) => b.emit(pt)?,
+            StorageType::ValType(t) => emit!(b, t),
+            StorageType::PackType(pt) => emit!(b, pt),
         }
-        Ok(())
     }
 }
 
 impl Binary for PackType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
-            PackType::I16 => b.emit(0x77)?,
-            PackType::I8 => b.emit(0x78)?,
+            PackType::I16 => emit!(b, 0x77),
+            PackType::I8 => emit!(b, 0x78),
         }
-        Ok(())
     }
 }
 
@@ -180,14 +165,12 @@ impl Binary for RecType {
         let RecType(st) = self;
         match st.as_slice() {
             [st] => {
-                b.emit(st)?;
+                emit!(b, st)
             }
             _ => {
-                b.emit(0x4E)?;
-                b.emit(st)?;
+                emit!(b, 0x4E, st)
             }
         }
-        Ok(())
     }
 }
 
@@ -195,20 +178,17 @@ impl Binary for SubType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
             SubType(Some(Final), x, ct) if x.is_empty() => {
-                b.emit(ct)?;
+                emit!(b, ct)
             }
             SubType(Some(Final), x, ct) => {
-                b.emit(0x4F)?;
-                b.emit(x.iter().map(|TypeUse(x)| x.clone()).collect::<Vec<_>>())?;
-                b.emit(ct)?;
+                let x = x.iter().map(|TypeUse(x)| x.clone()).collect::<Vec<_>>();
+                emit!(b, 0x4F, x, ct)
             }
             SubType(None, x, ct) => {
-                b.emit(0x4F)?;
-                b.emit(x.iter().map(|TypeUse(x)| x.clone()).collect::<Vec<_>>())?;
-                b.emit(ct)?;
+                let x = x.iter().map(|TypeUse(x)| x.clone()).collect::<Vec<_>>();
+                emit!(b, 0x4F, x, ct)
             }
         }
-        Ok(())
     }
 }
 
@@ -218,25 +198,18 @@ impl Binary for (&AddrType, &Limits) {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match *self {
             (AddrType::I32, &Limits(n, None)) => {
-                b.emit(0x00)?;
-                b.emit(U64(n))?;
+                emit!(b, 0x00, U64(n))
             }
             (AddrType::I32, &Limits(n, Some(m))) => {
-                b.emit(0x01)?;
-                b.emit(U64(n))?;
-                b.emit(U64(m))?;
+                emit!(b, 0x01, U64(n), U64(m))
             }
             (AddrType::I64, &Limits(n, None)) => {
-                b.emit(0x04)?;
-                b.emit(U64(n))?;
+                emit!(b, 0x04, U64(n))
             }
             (AddrType::I64, &Limits(n, Some(m))) => {
-                b.emit(0x05)?;
-                b.emit(U64(n))?;
-                b.emit(U64(m))?;
+                emit!(b, 0x05, U64(n), U64(m))
             }
         }
-        Ok(())
     }
 }
 
@@ -245,9 +218,7 @@ impl Binary for (&AddrType, &Limits) {
 impl Binary for TagType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         let TagType(TypeUse(x)) = self;
-        b.emit(0x00)?;
-        b.emit(x)?;
-        Ok(())
+        emit!(b, 0x00, x)
     }
 }
 
@@ -256,9 +227,7 @@ impl Binary for TagType {
 impl Binary for GlobalType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         let GlobalType(mut_, t) = self;
-        b.emit(t)?;
-        b.emit(mut_)?;
-        Ok(())
+        emit!(b, t, mut_)
     }
 }
 
@@ -267,8 +236,7 @@ impl Binary for GlobalType {
 impl Binary for MemType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         let MemType(at, lim) = self;
-        b.emit((at, lim))?;
-        Ok(())
+        emit!(b, (at, lim))
     }
 }
 
@@ -277,9 +245,7 @@ impl Binary for MemType {
 impl Binary for TableType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         let TableType(at, lim, rt) = self;
-        b.emit(rt)?;
-        b.emit((at, lim))?;
-        Ok(())
+        emit!(b, rt, (at, lim))
     }
 }
 
@@ -289,26 +255,20 @@ impl Binary for ExternType {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
         match self {
             ExternType::Func(TypeUse(x)) => {
-                b.emit(0x00)?;
-                b.emit(x)?;
+                emit!(b, 0x00, x)
             }
             ExternType::Table(tt) => {
-                b.emit(0x01)?;
-                b.emit(tt)?;
+                emit!(b, 0x01, tt)
             }
             ExternType::Mem(mt) => {
-                b.emit(0x02)?;
-                b.emit(mt)?;
+                emit!(b, 0x02, mt)
             }
             ExternType::Global(gt) => {
-                b.emit(0x03)?;
-                b.emit(gt)?;
+                emit!(b, 0x03, gt)
             }
             ExternType::Tag(jt) => {
-                b.emit(0x04)?;
-                b.emit(jt)?;
+                emit!(b, 0x04, jt)
             }
         }
-        Ok(())
     }
 }
