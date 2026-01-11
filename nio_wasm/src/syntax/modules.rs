@@ -105,8 +105,8 @@ pub struct Elem(
 
 pub enum ElemMode {
     Active(TableIdx, Expr),
-    Passive,     // Wasm 2.0 or later
-    Declarative, // Wasm 2.0 or later
+    Passive, // Wasm 2.0 or later
+    Declare, // Wasm 2.0 or later
 }
 
 // 2.5.10 Start Function

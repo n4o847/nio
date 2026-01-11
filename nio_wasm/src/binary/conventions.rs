@@ -1,19 +1,17 @@
 use super::*;
+use crate::binary::values::U32;
 
 // https://webassembly.github.io/spec/core/binary/conventions.html
 
 // 5.1 Conventions
 
-impl<W: io::Write> Emitter<W> {
-    // 5.1.3 Lists
+// 5.1.3 Lists
 
-    pub fn write_list<T, F>(&mut self, vec: &[T], mut f: F) -> io::Result<()>
-    where
-        F: FnMut(&mut Emitter<W>, &T) -> io::Result<()>,
-    {
-        self.write_u32(vec.len() as u32)?;
-        for x in vec.iter() {
-            f(self, x)?;
+impl<T: Binary> Binary for Vec<T> {
+    fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
+        b.emit(U32(self.len() as u32))?;
+        for el in self.iter() {
+            b.emit(el)?;
         }
         Ok(())
     }

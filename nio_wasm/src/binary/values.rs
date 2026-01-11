@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use super::super::syntax::*;
 use super::*;
 
@@ -7,92 +5,92 @@ use super::*;
 
 // 5.2 Values
 
-impl<W: io::Write> Emitter<W> {
-    // 5.2.2 Integers
+// 5.2.1 Bytes
 
-    // Unsigned Integers
+impl Binary for u8 {
+    fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
+        b.write(&[*self])
+    }
+}
 
-    pub fn write_u32(&mut self, mut value: u32) -> io::Result<()> {
-        loop {
-            if value < (1 << 7) {
-                self.write(&[value as u8])?;
-                break;
-            } else {
-                self.write(&[value as u8 | (1 << 7)])?;
-                value >>= 7;
+// 5.2.2 Integers
+
+macro_rules! impl_binary_for_u {
+    ($type:ty) => {
+        impl Binary for $type {
+            fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
+                let mut value = self.0;
+                loop {
+                    if value < (1 << 7) {
+                        b.emit(value as u8)?;
+                        break;
+                    } else {
+                        b.emit(value as u8 | (1 << 7))?;
+                        value >>= 7;
+                    }
+                }
+                Ok(())
             }
         }
-        Ok(())
-    }
+    };
+}
 
-    pub fn write_u64(&mut self, mut value: u64) -> io::Result<()> {
-        loop {
-            if value < (1 << 7) {
-                self.write(&[value as u8])?;
-                break;
-            } else {
-                self.write(&[value as u8 | (1 << 7)])?;
-                value >>= 7;
+macro_rules! impl_binary_for_s {
+    ($type:ty) => {
+        impl Binary for $type {
+            fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
+                let mut value = self.0;
+                loop {
+                    if 0 <= value && value < (1 << 6) {
+                        b.emit(value as u8)?;
+                        break;
+                    } else if (-1 << 6) <= value && value < 0 {
+                        b.emit(value as u8 & !(1 << 7))?;
+                        break;
+                    } else {
+                        b.emit(value as u8 | (1 << 7))?;
+                        value >>= 7;
+                    }
+                }
+                Ok(())
             }
         }
-        Ok(())
-    }
+    };
+}
 
-    // Signed Integers
-
-    pub fn write_s32(&mut self, mut value: i32) -> io::Result<()> {
-        loop {
-            if 0 <= value && value < (1 << 6) {
-                self.write(&[value as u8])?;
-                break;
-            } else if (-1 << 6) <= value && value < 0 {
-                self.write(&[value as u8 & !(1 << 7)])?;
-                break;
-            } else {
-                self.write(&[value as u8 | (1 << 7)])?;
-                value >>= 7;
+macro_rules! impl_binary_for_f {
+    ($type:ty) => {
+        impl Binary for $type {
+            fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
+                b.write(&self.0.to_le_bytes())
             }
         }
+    };
+}
+
+pub struct U32(pub u32);
+pub struct U64(pub u64);
+
+impl_binary_for_u!(U32);
+impl_binary_for_u!(U64);
+
+pub struct S33(pub i64);
+
+impl_binary_for_s!(S33);
+
+pub struct F32(pub f32);
+pub struct F64(pub f64);
+
+impl_binary_for_f!(F32);
+impl_binary_for_f!(F64);
+
+// 5.2.4 Names
+
+impl Binary for Name {
+    fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
+        b.emit(U32(self.0.len() as u32))?;
+        b.write(self.0.as_bytes())?;
         Ok(())
-    }
-
-    pub fn write_s33(&mut self, mut value: i64) -> io::Result<()> {
-        loop {
-            if 0 <= value && value < (1 << 6) {
-                self.write(&[value as u8])?;
-                break;
-            } else if (-1 << 6) <= value && value < 0 {
-                self.write(&[value as u8 & !(1 << 7)])?;
-                break;
-            } else {
-                self.write(&[value as u8 | (1 << 7)])?;
-                value >>= 7;
-            }
-        }
-        Ok(())
-    }
-
-    // Uninterpreted Integers
-
-    pub fn write_i32(&mut self, value: u32) -> io::Result<()> {
-        self.write_s32(value as i32)
-    }
-
-    // 5.2.3 Floating-Point
-
-    pub fn write_f32(&mut self, value: f32) -> io::Result<()> {
-        self.write(&value.to_le_bytes())
-    }
-
-    pub fn write_f64(&mut self, value: f64) -> io::Result<()> {
-        self.write(&value.to_le_bytes())
-    }
-
-    // 5.2.4 Names
-
-    pub fn write_name(&mut self, name: &Name) -> io::Result<()> {
-        self.write_u32(name.0.len() as u32)?;
-        self.write(name.0.as_bytes())
     }
 }
 
@@ -103,20 +101,20 @@ mod tests {
     #[test]
     fn test_write_u32() {
         // https://en.wikipedia.org/wiki/LEB128#Unsigned_LEB128
-        let mut buffer = Vec::new();
-        let mut emitter = Emitter::new(&mut buffer);
-        let result = emitter.write_u32(624485);
+        let mut buf = Vec::new();
+        let mut emitter = Emitter::new(&mut buf);
+        let result = emitter.emit(U32(624485));
         assert!(result.is_ok());
-        assert_eq!(buffer, &[0xe5, 0x8e, 0x26]);
+        assert_eq!(buf, &[0xe5, 0x8e, 0x26]);
     }
 
     #[test]
-    fn test_write_s32() {
+    fn test_write_s33() {
         // https://en.wikipedia.org/wiki/LEB128#Signed_LEB128
-        let mut buffer = Vec::new();
-        let mut emitter = Emitter::new(&mut buffer);
-        let result = emitter.write_s32(-123456);
+        let mut buf = Vec::new();
+        let mut emitter = Emitter::new(&mut buf);
+        let result = emitter.emit(S33(-123456));
         assert!(result.is_ok());
-        assert_eq!(buffer, &[0xc0, 0xbb, 0x78]);
+        assert_eq!(buf, &[0xc0, 0xbb, 0x78]);
     }
 }
