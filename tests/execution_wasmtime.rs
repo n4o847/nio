@@ -50,3 +50,28 @@ fn test_wasmtime_import() -> Result<(), Box<dyn error::Error>> {
 
     Ok(())
 }
+
+#[test]
+fn test_wasmtime_let() -> Result<(), Box<dyn error::Error>> {
+    let nio_code = indoc! {r#"
+        @export("func") def func(x: Int, y: Int): Int = {
+            let z: Int = 10
+            x + y + z
+        }
+    "#};
+
+    let wasm_bytes = nio::compiler::compile(nio_code)?.to_bytes()?;
+
+    let engine = Engine::default();
+    let module = Module::new(&engine, wasm_bytes)?;
+    let mut store = Store::new(&engine, ());
+
+    let instance = Instance::new(&mut store, &module, &[])?;
+
+    let func = instance.get_typed_func::<(i32, i32), i32>(&mut store, "func")?;
+
+    let result = func.call(&mut store, (3, 4))?;
+    assert_eq!(result, 17);
+
+    Ok(())
+}

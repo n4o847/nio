@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::cell::RefCell;
 use std::num::ParseIntError;
 use std::rc::Rc;
@@ -23,7 +21,13 @@ pub enum CodegenError {
 
 struct Context<'a>(Rc<RefCell<ContextImpl<'a>>>);
 
+enum Scope {
+    Func,
+    Block,
+}
+
 struct ContextImpl<'a> {
+    scope: Scope,
     parent: Option<Context<'a>>,
     funcs: Vec<Func<'a>>,
     locals: Vec<Local<'a>>,
@@ -38,28 +42,43 @@ struct Func<'a> {
 #[derive(Clone)]
 struct Local<'a> {
     name: &'a String,
-    type_: &'a ir::Type,
+    index: wasm::LocalIdx,
 }
 
 impl<'a> Context<'a> {
     fn new() -> Self {
         Self(Rc::new(RefCell::new(ContextImpl {
+            scope: Scope::Block,
             parent: None,
             funcs: Vec::new(),
             locals: Vec::new(),
         })))
     }
 
-    fn inherit(&'a self) -> Context<'a> {
+    fn new_func(&self) -> Context<'a> {
         Self(Rc::new(RefCell::new(ContextImpl {
+            scope: Scope::Func,
             parent: Some(Self(Rc::clone(&self.0))),
             funcs: Vec::new(),
             locals: Vec::new(),
         })))
     }
 
+    fn new_block(&self) -> Context<'a> {
+        Self(Rc::new(RefCell::new(ContextImpl {
+            scope: Scope::Block,
+            parent: Some(Self(Rc::clone(&self.0))),
+            funcs: Vec::new(),
+            locals: Vec::new(),
+        })))
+    }
+
+    fn add_func(&self, name: &'a String, index: wasm::FuncIdx) {
+        self.0.borrow_mut().funcs.push(Func { name, index });
+    }
+
     fn find_func_index<'b>(&'b self, name: &str) -> Option<wasm::FuncIdx> {
-        let ctx = self.0.as_ref().borrow();
+        let ctx = self.0.borrow();
         for func in ctx.funcs.iter() {
             if func.name == name {
                 return Some(func.index.clone());
@@ -67,6 +86,29 @@ impl<'a> Context<'a> {
         }
         if let Some(parent) = ctx.parent.as_ref() {
             return parent.find_func_index(name);
+        }
+        None
+    }
+
+    fn add_local(&self, name: &'a String, index: wasm::LocalIdx) {
+        let mut ctx = self.0.borrow_mut();
+        ctx.locals.push(Local { name, index });
+    }
+
+    fn find_local_index<'b>(&'b self, name: &str) -> Option<wasm::LocalIdx> {
+        let ctx = self.0.borrow();
+        for local in ctx.locals.iter() {
+            if local.name == name {
+                return Some(local.index.clone());
+            }
+        }
+        match ctx.scope {
+            Scope::Func => return None,
+            Scope::Block => {
+                if let Some(parent) = ctx.parent.as_ref() {
+                    return parent.find_local_index(name);
+                }
+            }
         }
         None
     }
@@ -93,11 +135,11 @@ impl CodeGenerator {
     fn pregenerate_program<'a>(
         &self,
         program: &'a ir::Program,
-        ctx: &'a Context<'a>,
+        ctx: &Context<'a>,
         module: &mut Module0,
     ) -> Result<(), CodegenError> {
         for stmt in program.statements.iter() {
-            self.pregenerate_stmt(stmt, &ctx, module)?;
+            self.pregenerate_stmt(stmt, ctx, module)?;
         }
         Ok(())
     }
@@ -105,7 +147,7 @@ impl CodeGenerator {
     fn generate_program<'a>(
         &self,
         program: &'a ir::Program,
-        ctx: &'a Context<'a>,
+        ctx: &Context<'a>,
         module: &mut Module1,
     ) -> Result<(), CodegenError> {
         let start_func_type_idx = module.add_type(wasm::Type(wasm::RecType(vec![wasm::SubType(
@@ -115,7 +157,7 @@ impl CodeGenerator {
         )])));
         let mut start_func = wasm::Func(start_func_type_idx, vec![], wasm::Expr(vec![]));
         for stmt in program.statements.iter() {
-            self.generate_stmt(stmt, &ctx, module, &mut start_func)?;
+            self.generate_stmt(stmt, ctx, module, &mut start_func)?;
         }
         let start_func_idx = module.add_func(start_func);
         module.add_export(wasm::Export(
@@ -128,7 +170,7 @@ impl CodeGenerator {
     fn pregenerate_stmt<'a>(
         &self,
         stmt: &'a ir::Stmt,
-        ctx: &'a Context<'a>,
+        ctx: &Context<'a>,
         module: &mut Module0,
     ) -> Result<(), CodegenError> {
         match stmt {
@@ -164,10 +206,7 @@ impl CodeGenerator {
                                             wasm::Name(import_name.to_string()),
                                             wasm::TypeUse(func_type_idx),
                                         );
-                                        ctx.0.as_ref().borrow_mut().funcs.push(Func {
-                                            name,
-                                            index: func_idx,
-                                        });
+                                        ctx.add_func(name, func_idx);
                                     }
                                     _ => todo!("Invalid form of import annotation: {:?}", args),
                                 },
@@ -189,7 +228,7 @@ impl CodeGenerator {
     fn generate_stmt<'a>(
         &self,
         stmt: &'a ir::Stmt,
-        ctx: &'a Context<'a>,
+        ctx: &Context<'a>,
         module: &mut Module1,
         func: &mut wasm::Func,
     ) -> Result<(), CodegenError> {
@@ -225,23 +264,15 @@ impl CodeGenerator {
                         func_name: name.to_string(),
                     });
                 };
-                let locals = vec![];
-                let mut ctx = ctx.inherit();
-                for (param_name, param_type) in params.iter() {
-                    ctx.0.as_ref().borrow_mut().locals.push(Local {
-                        name: param_name,
-                        type_: param_type,
-                    });
+                let ctx = ctx.new_func();
+                for (param_index, (param_name, _)) in params.iter().enumerate() {
+                    ctx.add_local(param_name, wasm::LocalIdx(param_index as u32));
                 }
-                let mut instructions = vec![];
-                self.generate_expr(body, &mut ctx, &mut instructions)?;
                 let func_type_idx = module.add_type(to_wasm_func_type(params, return_type));
-                let func_idx =
-                    module.add_func(wasm::Func(func_type_idx, locals, wasm::Expr(instructions)));
-                ctx.0.as_ref().borrow_mut().funcs.push(Func {
-                    name,
-                    index: func_idx.clone(),
-                });
+                let mut func = wasm::Func(func_type_idx, vec![], wasm::Expr(vec![]));
+                self.generate_expr(body, &ctx, module, &mut func)?;
+                let func_idx = module.add_func(func);
+                ctx.add_func(name, func_idx.clone());
                 match annotations.len() {
                     0 => {}
                     1 => {
@@ -268,61 +299,56 @@ impl CodeGenerator {
                     _ => todo!("Multiple annotations not supported"),
                 }
             }
-            ir::Stmt::Let { name, type_, value } => {
-                self.generate_expr(value, ctx, &mut func.2.0)?;
-                func.1
-                    .push(wasm::Local(wasm::ValType::NumType(wasm::NumType::I32)));
-                let local_idx = wasm::LocalIdx(ctx.0.as_ref().borrow().locals.len() as u32);
-                ctx.0
-                    .as_ref()
-                    .borrow_mut()
-                    .locals
-                    .push(Local { name, type_ });
+            ir::Stmt::Let { name, value, .. } => {
+                self.generate_expr(value, ctx, module, func)?;
+                let local_idx = module.add_local(
+                    func,
+                    wasm::Local(wasm::ValType::NumType(wasm::NumType::I32)),
+                );
+                ctx.add_local(name, local_idx.clone());
                 func.2.0.push(wasm::Instr::LocalSet(local_idx));
             }
             ir::Stmt::Expr(expr) => {
-                let mut ctx = ctx.inherit();
-                self.generate_expr(expr, &mut ctx, &mut func.2.0)?;
-                todo!();
+                self.generate_expr(expr, ctx, module, func)?;
             }
         }
         Ok(())
     }
 
-    fn generate_expr(
+    fn generate_expr<'a>(
         &self,
-        expr: &ir::Expr,
-        ctx: &Context,
-        instructions: &mut Vec<wasm::Instr>,
+        expr: &'a ir::Expr,
+        ctx: &Context<'a>,
+        module: &mut Module1,
+        func: &mut wasm::Func,
     ) -> Result<(), CodegenError> {
         match expr {
+            ir::Expr::Block { statements } => {
+                let ctx = ctx.new_block();
+                for stmt in statements.iter() {
+                    self.generate_stmt(stmt, &ctx, module, func)?;
+                }
+            }
             ir::Expr::BinOp { op, lhs, rhs } => {
-                self.generate_expr(lhs, ctx, instructions)?;
-                self.generate_expr(rhs, ctx, instructions)?;
+                self.generate_expr(lhs, ctx, module, func)?;
+                self.generate_expr(rhs, ctx, module, func)?;
                 match op {
                     ir::BinOp::Add => {
-                        instructions.push(wasm::Instr::I32Add);
+                        func.2.0.push(wasm::Instr::I32Add);
                     }
                     ir::BinOp::Sub => {
-                        instructions.push(wasm::Instr::I32Sub);
+                        func.2.0.push(wasm::Instr::I32Sub);
                     }
                     ir::BinOp::Mul => {
-                        instructions.push(wasm::Instr::I32Mul);
+                        func.2.0.push(wasm::Instr::I32Mul);
                     }
                 }
             }
             ir::Expr::Ident(name) => {
-                let mut found = false;
-                for (idx, local) in ctx.0.as_ref().borrow().locals.iter().enumerate() {
-                    if name == local.name {
-                        instructions.push(wasm::Instr::LocalGet(wasm::LocalIdx(idx as u32)));
-                        found = true;
-                        break;
-                    }
-                }
-                if !found {
+                let Some(local_idx) = ctx.find_local_index(name) else {
                     return Err(CodegenError::UndefinedVariable { name: name.clone() });
-                }
+                };
+                func.2.0.push(wasm::Instr::LocalGet(local_idx));
             }
             ir::Expr::IntLit(raw) => {
                 let value =
@@ -331,53 +357,48 @@ impl CodeGenerator {
                             raw: raw.clone(),
                             reason: err,
                         })?;
-                instructions.push(wasm::Instr::I32Const(value as u32));
+                func.2.0.push(wasm::Instr::I32Const(value as u32));
             }
             ir::Expr::Call { callee, args } => {
                 for arg in args.iter() {
-                    self.generate_expr(arg, ctx, instructions)?;
+                    self.generate_expr(arg, ctx, module, func)?;
                 }
                 match callee.as_ref() {
                     ir::Expr::Ident(name) => {
-                        let idx = ctx.find_func_index(name).ok_or_else(|| {
-                            CodegenError::UndefinedVariable {
-                                name: name.to_string(),
-                            }
-                        })?;
-                        instructions.push(wasm::Instr::Call(idx));
+                        let Some(func_idx) = ctx.find_func_index(name) else {
+                            return Err(CodegenError::UndefinedVariable { name: name.clone() });
+                        };
+                        func.2.0.push(wasm::Instr::Call(func_idx));
                     }
                     _ => todo!(),
                 }
             }
             _ => todo!(),
         }
-        dbg!(expr, instructions.len());
         Ok(())
     }
 }
 
 fn to_wasm_func_type(params: &Vec<(String, ir::Type)>, return_type: &ir::Type) -> wasm::Type {
-    let mut func_type = (wasm::ResultType(vec![]), wasm::ResultType(vec![]));
+    let mut wasm_param_types = vec![];
     for (_, param_type) in params.iter() {
         match param_type {
-            ir::Type::Int => func_type
-                .0
-                .0
-                .push(wasm::ValType::NumType(wasm::NumType::I32)),
+            ir::Type::Int => wasm_param_types.push(wasm::ValType::NumType(wasm::NumType::I32)),
             _ => todo!(),
         }
     }
+    let mut wasm_return_types = vec![];
     match return_type {
-        ir::Type::Int => func_type
-            .1
-            .0
-            .push(wasm::ValType::NumType(wasm::NumType::I32)),
+        ir::Type::Int => wasm_return_types.push(wasm::ValType::NumType(wasm::NumType::I32)),
         _ => todo!(),
     }
     wasm::Type(wasm::RecType(vec![wasm::SubType(
         Some(wasm::Final),
         vec![],
-        wasm::CompType::Func(func_type.0, func_type.1),
+        wasm::CompType::Func(
+            wasm::ResultType(wasm_param_types),
+            wasm::ResultType(wasm_return_types),
+        ),
     )]))
 }
 
@@ -462,6 +483,19 @@ impl Module1 {
         let idx = wasm::TypeIdx(self.types.len() as u32);
         self.types.push(type_);
         idx
+    }
+
+    fn add_local(&self, func: &mut wasm::Func, local: wasm::Local) -> wasm::LocalIdx {
+        let wasm::Func(wasm::TypeIdx(type_idx), locals, _) = func;
+        let func_type = &self.types[*type_idx as usize];
+        let wasm::Type(wasm::RecType(subtypes)) = func_type;
+        let param_count = match &subtypes[0] {
+            wasm::SubType(_, _, wasm::CompType::Func(wasm::ResultType(params), _)) => params.len(),
+            _ => unreachable!(),
+        };
+        let local_idx = wasm::LocalIdx(param_count as u32 + locals.len() as u32);
+        locals.push(local);
+        local_idx
     }
 
     fn add_func(&mut self, func: wasm::Func) -> wasm::FuncIdx {

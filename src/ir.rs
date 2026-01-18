@@ -22,6 +22,9 @@ pub enum Stmt {
 
 #[derive(Debug)]
 pub enum Expr {
+    Block {
+        statements: Vec<Stmt>,
+    },
     BinOp {
         op: BinOp,
         lhs: Box<Expr>,

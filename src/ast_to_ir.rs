@@ -44,6 +44,9 @@ impl From<ast::Stmt> for ir::Stmt {
 impl From<ast::Expr> for ir::Expr {
     fn from(e: ast::Expr) -> Self {
         match e {
+            ast::Expr::Block { statements } => ir::Expr::Block {
+                statements: statements.into_iter().map(ir::Stmt::from).collect(),
+            },
             ast::Expr::BinOp { op, lhs, rhs } => ir::Expr::BinOp {
                 op: ir::BinOp::from(op),
                 lhs: Box::new(ir::Expr::from(*lhs)),

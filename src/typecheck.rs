@@ -78,6 +78,11 @@ impl TypeChecker {
 
     fn typecheck_expr(&self, expr: &mut Expr) -> Result<(), TypeError> {
         match expr {
+            Expr::Block { statements } => {
+                for stmt in statements.iter_mut() {
+                    self.typecheck_stmt(stmt)?;
+                }
+            }
             Expr::BinOp { op: _, lhs, rhs } => {
                 self.typecheck_expr(lhs)?;
                 self.typecheck_expr(rhs)?;

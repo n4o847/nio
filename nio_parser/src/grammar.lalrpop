@@ -36,8 +36,14 @@ Param: (String, String) = {
 };
 
 Expr: Expr = {
+    BlockExpr,
     AddExpr,
     LambdaExpr,
+};
+
+BlockExpr: Expr = {
+    "{" NEWLINE? <statements: SepEndBy<Stmt, NEWLINE>> "}" =>
+        Expr::Block { statements },
 };
 
 AddExpr: Expr = {
@@ -118,10 +124,10 @@ extern {
         "@" => Token::At,
         "(" => Token::LParen,
         ")" => Token::RParen,
-        "[" => Token::LBrace,
-        "]" => Token::RBrace,
-        "{" => Token::LBracket,
-        "}" => Token::RBracket,
+        "[" => Token::LBracket,
+        "]" => Token::RBracket,
+        "{" => Token::LBrace,
+        "}" => Token::RBrace,
         "." => Token::Dot,
         "," => Token::Comma,
         ";" => Token::Semi,
