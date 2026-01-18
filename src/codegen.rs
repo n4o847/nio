@@ -77,7 +77,7 @@ impl<'a> Context<'a> {
         self.0.borrow_mut().funcs.push(Func { name, index });
     }
 
-    fn find_func_index<'b>(&'b self, name: &str) -> Option<wasm::FuncIdx> {
+    fn find_func_index(&self, name: &str) -> Option<wasm::FuncIdx> {
         let ctx = self.0.borrow();
         for func in ctx.funcs.iter() {
             if func.name == name {
@@ -95,7 +95,7 @@ impl<'a> Context<'a> {
         ctx.locals.push(Local { name, index });
     }
 
-    fn find_local_index<'b>(&'b self, name: &str) -> Option<wasm::LocalIdx> {
+    fn find_local_index(&self, name: &str) -> Option<wasm::LocalIdx> {
         let ctx = self.0.borrow();
         for local in ctx.locals.iter() {
             if local.name == name {

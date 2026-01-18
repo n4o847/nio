@@ -63,6 +63,6 @@ trait Binary {
 
 impl<T: Binary> Binary for &T {
     fn binary<W: io::Write>(&self, b: &mut Emitter<W>) -> io::Result<()> {
-        T::binary(self, b)
+        T::binary(*self, b)
     }
 }
